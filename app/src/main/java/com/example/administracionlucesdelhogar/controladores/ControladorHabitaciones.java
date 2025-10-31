@@ -13,8 +13,8 @@ import java.util.ArrayList;
 
 public class ControladorHabitaciones {
     private static ControladorHabitaciones instance;
-    private ArrayList<Habitacion> listaHabitaciones;
-    private Context context;
+    private final ArrayList<Habitacion> listaHabitaciones;
+    private final Context context;
     private static final String PREFS_NAME = "HabitacionesPrefs";
 
     private ControladorHabitaciones(Context context) {
