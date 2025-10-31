@@ -1,24 +1,36 @@
 package com.example.administracionlucesdelhogar
 
+import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import android.view.View
+import android.widget.Button
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
-import com.example.administracionlucesdelhogar.ui.theme.AdministracionLucesDelHogarTheme
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.OnApplyWindowInsetsListener
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            AdministracionLucesDelHogarTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    LightControlScreen()
-                }
-            }
-        }
+        this.enableEdgeToEdge()
+
+        setContentView(R.layout.activity_main)
+        ViewCompat.setOnApplyWindowInsetsListener(
+            findViewById<View?>(R.id.main),
+            OnApplyWindowInsetsListener { v: View?, insets: WindowInsetsCompat? ->
+                val systemBars = insets!!.getInsets(WindowInsetsCompat.Type.systemBars())
+                v!!.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+                insets
+            })
+
+        val btnHabitaciones = findViewById<Button>(R.id.btnHabitaciones)
+        btnHabitaciones.setOnClickListener(View.OnClickListener { v: View? ->
+            startActivity(Intent(this@MainActivity, HabitacionesActivity::class.java))
+        })
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
 }
