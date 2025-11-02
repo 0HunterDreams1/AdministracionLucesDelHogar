@@ -85,7 +85,6 @@ class HabitacionesActivity : AppCompatActivity() {
         }
     }
 
-
     private fun cargarHabitacionesDinamico(gridLayout: GridLayout){
         val lista_habitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
         gridLayout.removeAllViews()
@@ -99,8 +98,13 @@ class HabitacionesActivity : AppCompatActivity() {
 
                 iconView.setImageResource(habitacion.tipoHabitacion)
                 textView.text = "(" + habitacion.id + ") " + habitacion.nombre
+
+                // Seteo el estado del switch de la habitación
+                switchRoom.isChecked = habitacion.estado
+
                 switchRoom.setOnCheckedChangeListener { _, isChecked ->
                     val estado = if (isChecked) "encendida" else "apagada"
+                    controladorHabitaciones.actualizarEstado(habitacion, isChecked)
                     Toast.makeText(this, "${habitacion.nombre} está $estado", Toast.LENGTH_SHORT).show()
                 }
 
