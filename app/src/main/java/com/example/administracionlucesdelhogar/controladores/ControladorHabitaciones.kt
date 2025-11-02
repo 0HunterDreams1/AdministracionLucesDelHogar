@@ -46,6 +46,7 @@ class ControladorHabitaciones private constructor(context: Context) {
                     obj.put("id", h.id)
                     obj.put("nombre", h.nombre)
                     obj.put("estado", h.estado)
+                    obj.put("idTipoHabitacion", h.tipoHabitacion)
                     jsonArray.put(obj)
                 } catch (e: JSONException) {
                     e.printStackTrace()
@@ -69,7 +70,8 @@ class ControladorHabitaciones private constructor(context: Context) {
                         Habitacion(
                             obj.getInt("id"),
                             obj.getString("nombre"),
-                            obj.getBoolean("estado")
+                            obj.getBoolean("estado"),
+                            tipoHabitacion = obj.getInt("idTipoHabitacion")
                         )
                     )
                 }

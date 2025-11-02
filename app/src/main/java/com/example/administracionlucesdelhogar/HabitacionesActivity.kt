@@ -10,11 +10,16 @@ import android.text.InputType
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CompoundButton
 import android.widget.EditText
+import android.widget.GridLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.Switch
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -23,6 +28,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.administracionlucesdelhogar.controladores.ControladorHabitaciones
 import com.example.administracionlucesdelhogar.modelos.Habitacion
+import com.example.administracionlucesdelhogar.modelos.TipoHabitacion
 import kotlin.math.roundToInt
 
 @Suppress("DEPRECATION")
@@ -52,28 +58,60 @@ class HabitacionesActivity : AppCompatActivity() {
         // Referencio al controlador de habitaciones
         controladorHabitaciones = ControladorHabitaciones.getInstance(this)
 
+        val gridLayout = findViewById<GridLayout>(R.id.roomGrid)
+        cargarHabitacionesDinamico(gridLayout)
+
         val layoutHabitaciones = findViewById<LinearLayout>(R.id.layoutHabitaciones)
         val btnAgregar = findViewById<Button>(R.id.btnAgregarHabitacion)
         val btnEditar = findViewById<Button>(R.id.btnEditarHabitacion)
         val btnEliminar = findViewById<Button>(R.id.btnEliminarHabitacion)
 
-        cargarHabitaciones(layoutHabitaciones)
+
 
         btnAgregar.setOnClickListener { v: View? ->
             mostrarDialogoAgregarHabitacion(
-                layoutHabitaciones
+                gridLayout
             )
         }
         btnEditar.setOnClickListener { v: View? ->
             editarHabitacion(
-                layoutHabitaciones
+                gridLayout
             )
         }
         btnEliminar.setOnClickListener { v: View? ->
             eliminarHabitacion(
-                layoutHabitaciones
+                gridLayout
             )
         }
+    }
+
+
+    private fun cargarHabitacionesDinamico(gridLayout: GridLayout){
+        val lista_habitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
+        gridLayout.removeAllViews()
+        if (lista_habitaciones.isNotEmpty()) {
+            gridLayout.visibility = View.VISIBLE
+            for (habitacion in lista_habitaciones) {
+                val itemHabitacionView = layoutInflater.inflate(R.layout.item_habitacion, gridLayout, false)
+                val textView = itemHabitacionView.findViewById<TextView>(R.id.textRoomName)
+                val switchRoom = itemHabitacionView.findViewById<Switch>(R.id.switchRoom)
+                val iconView = itemHabitacionView.findViewById<ImageView>(R.id.iconRoom)
+
+                iconView.setImageResource(habitacion.tipoHabitacion)
+                textView.text = "(" + habitacion.id + ") " + habitacion.nombre
+                switchRoom.setOnCheckedChangeListener { _, isChecked ->
+                    val estado = if (isChecked) "encendida" else "apagada"
+                    Toast.makeText(this, "${habitacion.nombre} está $estado", Toast.LENGTH_SHORT).show()
+                }
+
+                gridLayout.addView(itemHabitacionView)
+            }
+
+
+        } else {
+            gridLayout.visibility = View.GONE
+        }
+
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -84,44 +122,7 @@ class HabitacionesActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    private fun cargarHabitaciones(layoutHabitaciones: LinearLayout) {
-        layoutHabitaciones.removeAllViews()
-        val lista: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
-
-        for (h in lista) {
-            val sw = Switch(this)
-            val txtHabitacion = "(" + h.id + ") " + h.nombre
-            sw.text = txtHabitacion
-            sw.setChecked(h.estado)
-            // Aplico margenes a los switchs
-            val params =
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-            // Convierto los 20dp en pixeles
-            val densidad = getResources().displayMetrics.density
-            val margenLateral = (20 * densidad).roundToInt()
-            val margenVertical = (10 * densidad).roundToInt()
-            // Aplicar los márgenes izquierdo y derecho
-            params.setMargins(margenLateral, margenVertical, margenLateral, margenVertical)
-            sw.setLayoutParams(params)
-            // Fin de aplicaión de margenes
-            sw.setOnCheckedChangeListener { buttonView: CompoundButton?, isChecked: Boolean ->
-                h.estado = isChecked
-                controladorHabitaciones.actualizarEstado(h, isChecked)
-                Toast.makeText(
-                    this,
-                    h.nombre + (if (isChecked) " encendida" else " apagada"),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-            layoutHabitaciones.addView(sw)
-        }
-    }
-
-    private fun mostrarDialogoAgregarHabitacion(layoutHabitaciones: LinearLayout) {
+    private fun mostrarDialogoAgregarHabitacion(gridLayout: GridLayout) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Agregar nueva habitación")
 
@@ -129,6 +130,23 @@ class HabitacionesActivity : AppCompatActivity() {
         val layout = LinearLayout(this)
         layout.orientation = LinearLayout.VERTICAL
         layout.setPadding(50, 40, 50, 10)
+
+        val tipos = listOf(
+            TipoHabitacion.Cocina,
+            TipoHabitacion.Habitacion
+        )
+        val nombresTipos = tipos.map { it.nombre }
+        val label = TextView(this)
+        label.text = "Tipo de habitación"
+        label.setTextSize(16f)
+        label.setPadding(0, 16, 0, 8)
+        layout.addView(label)
+
+        val spinner = Spinner(this)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombresTipos)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+        layout.addView(spinner)
 
         val inputId = EditText(this)
         inputId.setHint("ID numérico (único)")
@@ -182,9 +200,11 @@ class HabitacionesActivity : AppCompatActivity() {
                     }
                 }
 
-                val nueva = Habitacion(id, nombre, false)
+                val nueva = Habitacion(id, nombre, false, tipos[spinner.selectedItemPosition].iconoResId)
                 controladorHabitaciones.agregarHabitacion(nueva)
-                cargarHabitaciones(layoutHabitaciones)
+                controladorHabitaciones.guardarCambios()
+               /** cargarHabitaciones(layoutHabitaciones) */
+                cargarHabitacionesDinamico(gridLayout)
                 Toast.makeText(this, "Habitación $nombre agregada", Toast.LENGTH_SHORT)
                     .show()
             })
@@ -195,7 +215,7 @@ class HabitacionesActivity : AppCompatActivity() {
         builder.show()
     }
 
-    private fun editarHabitacion(layoutHabitaciones: LinearLayout) {
+    private fun editarHabitacion(gridLayout: GridLayout) {
         val lista: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
         if (lista.isEmpty()) {
             Toast.makeText(this, "No hay habitaciones para editar", Toast.LENGTH_SHORT).show()
@@ -208,7 +228,7 @@ class HabitacionesActivity : AppCompatActivity() {
             val h: Habitacion = lista[i]
             nombres[i] = h.id.toString() + " - " + h.nombre
         }
-
+        val layoutHabitaciones = findViewById<LinearLayout>(R.id.layoutHabitaciones)
         AlertDialog.Builder(this)
             .setTitle("Selecciona una habitación para editar")
             .setItems(
@@ -216,17 +236,14 @@ class HabitacionesActivity : AppCompatActivity() {
             ) { dialog: DialogInterface?, which: Int ->
                 mostrarDialogoEditarHabitacion(
                     lista[which],
-                    layoutHabitaciones
+                    gridLayout
                 )
             }
             .setNegativeButton("Cancelar", null)
             .show()
     }
 
-    private fun mostrarDialogoEditarHabitacion(
-        habitacion: Habitacion,
-        layoutHabitaciones: LinearLayout
-    ) {
+    private fun mostrarDialogoEditarHabitacion(habitacion: Habitacion,gridLayout: GridLayout) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Editar habitación")
 
@@ -295,7 +312,8 @@ class HabitacionesActivity : AppCompatActivity() {
                 habitacion.id = nuevoId
                 habitacion.nombre = nombre
                 controladorHabitaciones.guardarCambios()
-                cargarHabitaciones(layoutHabitaciones)
+                /** cargarHabitaciones(layoutHabitaciones) */
+                cargarHabitacionesDinamico(gridLayout)
                 Toast.makeText(this, "Habitación actualizada", Toast.LENGTH_SHORT).show()
             })
 
@@ -305,7 +323,7 @@ class HabitacionesActivity : AppCompatActivity() {
         builder.show()
     }
 
-    private fun eliminarHabitacion(layoutHabitaciones: LinearLayout) {
+    private fun eliminarHabitacion(gridLayout: GridLayout) {
         val lista: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
         if (lista.isEmpty()) {
             Toast.makeText(this, "No hay habitaciones para eliminar", Toast.LENGTH_SHORT).show()
@@ -325,7 +343,8 @@ class HabitacionesActivity : AppCompatActivity() {
             ) { dialog: DialogInterface?, which: Int ->
                 val seleccionada: Habitacion = lista[which]
                 controladorHabitaciones.eliminarHabitacion(seleccionada)
-                cargarHabitaciones(layoutHabitaciones)
+                /** cargarHabitaciones(layoutHabitaciones) **/
+                cargarHabitacionesDinamico(gridLayout)
                 Toast.makeText(
                     this,
                     seleccionada.nombre + " eliminada",

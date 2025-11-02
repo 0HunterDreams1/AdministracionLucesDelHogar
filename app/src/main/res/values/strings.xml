@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">Administracion luces del hogar</string>
+    <string name="app_name">DomitiLuz</string>
     <string name="global_btn_agregar">Agregar</string>
     <string name="global_btn_editar">Editar</string>
     <string name="global_btn_eliminar">Eliminar</string>
-    <string name="main_msj_bienvenida">Aplicación para administrar las luces de su hogar</string>
+    <string name="main_msj_bienvenida">Encendé tu mundo. Elegí una habitación y ajustá la luz a tu medida.</string>
     <string name="main_btn_habitaciones">Habitaciones</string>
     <string name="hab_titulo">Habitaciones</string>
     <string name="hab_msj_principal">Administre las habitaciones que desea controlar</string>
