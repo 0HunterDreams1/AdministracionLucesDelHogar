@@ -18,7 +18,7 @@ import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Spinner
-import android.widget.Switch
+import androidx.appcompat.widget.SwitchCompat
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -93,7 +93,7 @@ class HabitacionesActivity : AppCompatActivity() {
             for (habitacion in lista_habitaciones) {
                 val itemHabitacionView = layoutInflater.inflate(R.layout.item_habitacion, gridLayout, false)
                 val textView = itemHabitacionView.findViewById<TextView>(R.id.textRoomName)
-                val switchRoom = itemHabitacionView.findViewById<Switch>(R.id.switchRoom)
+                val switchRoom = itemHabitacionView.findViewById<SwitchCompat>(R.id.switchRoom)
                 val iconView = itemHabitacionView.findViewById<ImageView>(R.id.iconRoom)
 
                 iconView.setImageResource(habitacion.tipoHabitacion)
@@ -139,6 +139,7 @@ class HabitacionesActivity : AppCompatActivity() {
             TipoHabitacion.Cocina,
             TipoHabitacion.Habitacion
         )
+
         val nombresTipos = tipos.map { it.nombre }
         val label = TextView(this)
         label.text = "Tipo de habitación"
@@ -203,7 +204,6 @@ class HabitacionesActivity : AppCompatActivity() {
                         return@OnClickListener
                     }
                 }
-
                 val nueva = Habitacion(id, nombre, false, tipos[spinner.selectedItemPosition].iconoResId)
                 controladorHabitaciones.agregarHabitacion(nueva)
                 controladorHabitaciones.guardarCambios()
