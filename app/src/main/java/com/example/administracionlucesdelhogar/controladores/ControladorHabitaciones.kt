@@ -2,6 +2,7 @@ package com.example.administracionlucesdelhogar.controladores
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import com.example.administracionlucesdelhogar.modelos.Habitacion
 import org.json.JSONArray
 import org.json.JSONException

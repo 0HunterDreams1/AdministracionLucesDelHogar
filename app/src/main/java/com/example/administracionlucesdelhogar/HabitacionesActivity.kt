@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -89,7 +90,7 @@ class HabitacionesActivity : AppCompatActivity() {
     private fun cargarHabitacionesDinamico(gridLayout: GridLayout){
         val lista_habitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
         val layoutHabitaciones = findViewById<LinearLayout>(R.id.layoutHabitaciones)
-        gridLayout.removeAllViews()
+        layoutHabitaciones.removeAllViews()
         if (lista_habitaciones.isNotEmpty()) {
             gridLayout.visibility = View.VISIBLE
             for (habitacion in lista_habitaciones) {
@@ -151,7 +152,8 @@ class HabitacionesActivity : AppCompatActivity() {
             TipoHabitacion.Baño,
             TipoHabitacion.Comedor,
             TipoHabitacion.Patio,
-            TipoHabitacion.Living
+            TipoHabitacion.Living,
+            TipoHabitacion.Garage
         )
 
         val nombresTipos = tipos.map { it.nombre }
@@ -269,6 +271,40 @@ class HabitacionesActivity : AppCompatActivity() {
         layout.orientation = LinearLayout.VERTICAL
         layout.setPadding(50, 40, 50, 10)
 
+        val tipos = listOf(
+            TipoHabitacion.Cocina,
+            TipoHabitacion.Habitacion,
+            TipoHabitacion.Baño,
+            TipoHabitacion.Comedor,
+            TipoHabitacion.Patio,
+            TipoHabitacion.Living,
+            TipoHabitacion.Garage
+        )
+
+        val nombresTipos = tipos.map {it.nombre }
+        val label = TextView(this)
+        label.text = "Tipo de habitación"
+        label.setTextSize(16f)
+        label.setPadding(0, 16, 0, 8)
+        layout.addView(label)
+
+        val spinner = Spinner(this)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombresTipos)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+        layout.addView(spinner)
+
+        val iconBuscado = habitacion.tipoHabitacion // o el que corresponda
+        val tipoEncontrado = tipos.find { it.iconoResId == iconBuscado }
+
+        if (tipoEncontrado != null) {
+            val posicion = tipos.indexOfFirst { it.iconoResId  == tipoEncontrado.iconoResId }
+            Log.i("posicion",posicion.toString())
+            if (posicion >= 0) {
+                spinner.setSelection(posicion)
+            }
+        }
+
         val inputId = EditText(this)
         inputId.setHint("ID numérico (único)")
         inputId.setInputType(InputType.TYPE_CLASS_NUMBER)
@@ -329,6 +365,7 @@ class HabitacionesActivity : AppCompatActivity() {
                 // Actualizar datos
                 habitacion.id = nuevoId
                 habitacion.nombre = nombre
+                habitacion.tipoHabitacion = tipos[spinner.selectedItemPosition].iconoResId
                 controladorHabitaciones.guardarCambios()
                 /** cargarHabitaciones(layoutHabitaciones) */
                 cargarHabitacionesDinamico(gridLayout)

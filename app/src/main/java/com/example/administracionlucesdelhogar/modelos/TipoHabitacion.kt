@@ -9,4 +9,8 @@ sealed class TipoHabitacion(val nombre: String, val iconoResId: Int) {
     object Living : TipoHabitacion("Living", R.drawable.outline_chair_24)
     object Patio : TipoHabitacion("Patio", R.drawable.outline_deceased_24)
     object Habitacion : TipoHabitacion("Habitación", R.drawable.outline_airline_seat_individual_suite_24)
+    object Garage : TipoHabitacion("Garage", R.drawable.outline_garage_door_24)
+
+
+
 }
