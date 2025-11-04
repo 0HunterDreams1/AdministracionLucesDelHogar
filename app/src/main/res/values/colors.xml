@@ -7,4 +7,12 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="primary">#5077A4</color>
+    <color name="delete">#A45065</color>
+    <color name="fondo_app">#D9EDFF</color>
+    <color name="fondo_card">#F7F2FA</color>
+    <color name="switch_true">#001F42</color>
+    <color name="secondary">#E6E0E9</color>
+
+
 </resources>

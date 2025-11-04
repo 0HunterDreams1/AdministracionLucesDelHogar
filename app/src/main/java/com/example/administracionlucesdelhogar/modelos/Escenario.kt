@@ -1,10 +1,10 @@
 package com.example.administracionlucesdelhogar.modelos
 
-class Habitacion(id: Int, nombre: String?, estado: Boolean, tipoHabitacion: Int) {
+class Escenario(id: Int, nombre: String, habitaciones: ArrayList<Habitacion>, estado: Boolean) {
     var id: Int = 0
     var nombre: String? = null
+    var habitaciones: ArrayList<Habitacion> = ArrayList()
     var estado: Boolean = false
-    var tipoHabitacion: Int = 0
 
     /**
      * Constructor
@@ -12,7 +12,7 @@ class Habitacion(id: Int, nombre: String?, estado: Boolean, tipoHabitacion: Int)
     init {
         this.id = id
         this.nombre = nombre
+        this.habitaciones = habitaciones
         this.estado = estado
-        this.tipoHabitacion = tipoHabitacion
     }
 }

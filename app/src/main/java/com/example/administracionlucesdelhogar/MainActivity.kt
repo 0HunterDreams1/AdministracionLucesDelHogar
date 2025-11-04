@@ -27,6 +27,11 @@ class MainActivity : AppCompatActivity() {
         btnHabitaciones.setOnClickListener { v: View? ->
             startActivity(Intent(this@MainActivity, HabitacionesActivity::class.java))
         }
+
+        val btnEscenarios = findViewById<Button>(R.id.btnEscenarios)
+        btnEscenarios.setOnClickListener { v: View? ->
+            startActivity(Intent(this@MainActivity, EscenariosActivity::class.java))
+        }
     }
 
     override fun onDestroy() {

@@ -29,6 +29,13 @@ class ControladorHabitaciones private constructor(context: Context) {
     fun actualizarEstado(h: Habitacion, estado: Boolean) {
         h.estado = estado
         guardarEnPrefs()
+
+        // Apagar todos los escenarios porque se alteró manualmente una habitación
+        val controladorEscenarios = ControladorEscenarios.getInstance(context)
+        for (e in controladorEscenarios.listaEscenarios) {
+            e.estado = false
+        }
+        controladorEscenarios.guardarCambios()
     }
 
     fun guardarCambios() {
@@ -46,6 +53,7 @@ class ControladorHabitaciones private constructor(context: Context) {
                     obj.put("id", h.id)
                     obj.put("nombre", h.nombre)
                     obj.put("estado", h.estado)
+                    obj.put("tipoHabitacion", h.tipoHabitacion)
                     jsonArray.put(obj)
                 } catch (e: JSONException) {
                     e.printStackTrace()
@@ -69,7 +77,8 @@ class ControladorHabitaciones private constructor(context: Context) {
                         Habitacion(
                             obj.getInt("id"),
                             obj.getString("nombre"),
-                            obj.getBoolean("estado")
+                            obj.getBoolean("estado"),
+                            obj.getInt("tipoHabitacion")
                         )
                     )
                 }
