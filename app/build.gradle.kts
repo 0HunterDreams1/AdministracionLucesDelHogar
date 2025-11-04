@@ -52,7 +52,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
 
     implementation("io.ktor:ktor-client-core:2.3.10")
-    implementation("io.ktor:ktor-client-cio:2.3.10")
+    // Reemplazado CIO por el motor de Android
+    implementation("io.ktor:ktor-client-android:2.3.10")
     implementation("io.ktor:ktor-client-content-negotiation:2.3.10")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.10")
     implementation(libs.androidx.appcompat)
