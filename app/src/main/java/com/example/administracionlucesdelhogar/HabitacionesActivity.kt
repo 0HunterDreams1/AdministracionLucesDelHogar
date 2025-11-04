@@ -1,6 +1,5 @@
 package com.example.administracionlucesdelhogar
 
-import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.DialogInterface
 import android.graphics.Color
@@ -9,7 +8,6 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CompoundButton
@@ -26,14 +24,21 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.administracionlucesdelhogar.controladores.ControladorHabitaciones
 import com.example.administracionlucesdelhogar.modelos.Habitacion
 import com.example.administracionlucesdelhogar.modelos.TipoHabitacion
-import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.ServerResponseException
+import io.ktor.util.network.UnresolvedAddressException
 
 @Suppress("DEPRECATION")
 class HabitacionesActivity : AppCompatActivity() {
     private lateinit var controladorHabitaciones: ControladorHabitaciones
+    private val arduinoRepository = ArduinoRepository() // Instancia del repositorio
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,53 +71,92 @@ class HabitacionesActivity : AppCompatActivity() {
         val btnEditar = findViewById<Button>(R.id.btnEditarHabitacion)
         val btnEliminar = findViewById<Button>(R.id.btnEliminarHabitacion)
 
+        btnAgregar.setOnClickListener { mostrarDialogoAgregarHabitacion(gridLayout) }
+        btnEditar.setOnClickListener { editarHabitacion(gridLayout) }
+        btnEliminar.setOnClickListener { eliminarHabitacion(gridLayout) }
+    }
 
+    // 1) Metodo que maneja el cambio del switch (firma requerida por setOnCheckedChangeListener)
+    fun onSwitchChanged(button: CompoundButton, isChecked: Boolean) {
+        val switchRoom = button as? SwitchCompat ?: return
+        val habitacion = switchRoom.tag as? Habitacion ?: return
 
-        btnAgregar.setOnClickListener { v: View? ->
-            mostrarDialogoAgregarHabitacion(
-                gridLayout
-            )
-        }
-        btnEditar.setOnClickListener { v: View? ->
-            editarHabitacion(
-                gridLayout
-            )
-        }
-        btnEliminar.setOnClickListener { v: View? ->
-            eliminarHabitacion(
-                gridLayout
-            )
+        // bloquear interacción mientras se procesa
+        switchRoom.isEnabled = false
+
+        lifecycleScope.launch {
+            try {
+                // Ejecutar la llamada de red en IO
+                withContext(Dispatchers.IO) {
+                    if (isChecked) {
+                        arduinoRepository.turnOn(habitacion.id.toString())
+                    } else {
+                        arduinoRepository.turnOff(habitacion.id.toString())
+                    }
+                }
+
+                // actualizar modelo solo si la petición fue exitosa
+                controladorHabitaciones.actualizarEstado(habitacion, isChecked)
+                val estado = if (isChecked) "encendida" else "apagada"
+                Toast.makeText(this@HabitacionesActivity, "Luz $estado", Toast.LENGTH_SHORT).show()
+            } catch (e: ClientRequestException) {
+                // 4xx
+                Toast.makeText(this@HabitacionesActivity, "Error en la petición: ${e.message}", Toast.LENGTH_LONG).show()
+                revertSwitch(switchRoom, isChecked, habitacion)
+            } catch (e: ServerResponseException) {
+                // 5xx
+                Toast.makeText(this@HabitacionesActivity, "Error de servidor: ${e.message}", Toast.LENGTH_LONG).show()
+                revertSwitch(switchRoom, isChecked, habitacion)
+            } catch (e: UnresolvedAddressException) {
+                Toast.makeText(this@HabitacionesActivity, "No se encuentra la dirección: ${e.message}", Toast.LENGTH_LONG).show()
+                revertSwitch(switchRoom, isChecked, habitacion)
+            } catch (e: Exception) {
+                Toast.makeText(this@HabitacionesActivity, "Error de red: ${e.message}", Toast.LENGTH_LONG).show()
+                revertSwitch(switchRoom, isChecked, habitacion)
+            } finally {
+                switchRoom.isEnabled = true
+            }
         }
     }
 
+    // Helper para revertir el switch sin reentradas
+    private fun revertSwitch(switchRoom: SwitchCompat, attemptedChecked: Boolean, habitacion: Habitacion) {
+        // quitar listener antes de cambiar el estado
+        switchRoom.setOnCheckedChangeListener(null)
+        switchRoom.isChecked = !attemptedChecked
+        controladorHabitaciones.actualizarEstado(habitacion, !attemptedChecked)
+        // reasignar listener
+        switchRoom.setOnCheckedChangeListener(this@HabitacionesActivity::onSwitchChanged)
+    }
     private fun cargarHabitacionesDinamico(gridLayout: GridLayout){
         val lista_habitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
         gridLayout.removeAllViews()
         if (lista_habitaciones.isNotEmpty()) {
             gridLayout.visibility = View.VISIBLE
             for (habitacion in lista_habitaciones) {
-                val itemHabitacionView = layoutInflater.inflate(R.layout.item_habitacion, gridLayout, false)
+                val itemHabitacionView =
+                    layoutInflater.inflate(R.layout.item_habitacion, gridLayout, false)
                 val textView = itemHabitacionView.findViewById<TextView>(R.id.textRoomName)
                 val switchRoom = itemHabitacionView.findViewById<SwitchCompat>(R.id.switchRoom)
                 val iconView = itemHabitacionView.findViewById<ImageView>(R.id.iconRoom)
 
+                // Dentro de cargarHabitacionesDinamico, por cada habitacion al inflar itemHabitacionView:
                 iconView.setImageResource(habitacion.tipoHabitacion)
-                textView.text = "(" + habitacion.id + ") " + habitacion.nombre
+                textView.text = "(${habitacion.id}) ${habitacion.nombre}"
 
-                // Seteo el estado del switch de la habitación
+                // asociar habitacion al switch para recuperarla luego en onSwitchChanged
+                switchRoom.tag = habitacion
+
+                // setear estado sin disparar el listener (asegurar estado inicial)
+                switchRoom.setOnCheckedChangeListener(null)
                 switchRoom.isChecked = habitacion.estado
 
-                switchRoom.setOnCheckedChangeListener { _, isChecked ->
-                    val estado = if (isChecked) "encendida" else "apagada"
-                    controladorHabitaciones.actualizarEstado(habitacion, isChecked)
-                    Toast.makeText(this, "${habitacion.nombre} está $estado", Toast.LENGTH_SHORT).show()
-                }
-
+                // ahora asignar el listener por referencia al metodo definido arriba
+                switchRoom.setOnCheckedChangeListener(this@HabitacionesActivity::onSwitchChanged)
                 gridLayout.addView(itemHabitacionView)
             }
 
-
-        } else {
+        }else {
             gridLayout.visibility = View.GONE
         }
 

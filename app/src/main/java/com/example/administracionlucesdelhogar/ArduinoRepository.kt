@@ -1,29 +1,85 @@
 package com.example.administracionlucesdelhogar
 
+import android.util.Log
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.android.Android
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.call.body
 import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsText
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
 
 class ArduinoRepository {
 
-    // Reemplaza esta dirección IP con la de tu NodeMCU
-    // Puedes encontrarla en el monitor serie del IDE de Arduino cuando se conecta.
-    private val nodeMcuIp = "192.168.100.21" // <- ¡CAMBIA ESTO!
+    private val nodeMcuIp = "192.168.100.21"
 
-    private val client = HttpClient(Android) // Usamos el motor de Android
+    private val client = HttpClient(OkHttp) {
+        install(HttpTimeout) {
+            connectTimeoutMillis = 10_000
+            requestTimeoutMillis = 20_000
+            socketTimeoutMillis = 20_000
+        }
+        install(Logging) {
+            logger = object : Logger {
+                override fun log(message: String) {
+                    Log.d("Ktor", message)
+                }
+            }
+            level = LogLevel.INFO
+        }
+    }
 
+    // Llama y no lee el body
     suspend fun turnOn(lightId: String) {
-        // URL actualizada para que coincida con el código de tu NodeMCU
-        val response = client.get("http://$nodeMcuIp/led/on")
-        // Opcional: puedes imprimir la respuesta para depurar
-        println("Respuesta de NodeMCU (turnOn): ${response.bodyAsText()}")
+        val url = "http://$nodeMcuIp/led/on?id=$lightId"
+        Log.d("ArduinoRepository", "Llamando a: $url")
+        try {
+            withContext(Dispatchers.IO) {
+                client.get(url)
+            }
+            Log.d("ArduinoRepository", "Petición (turnOn) enviada.")
+        } catch (e: Exception) {
+            Log.e("ArduinoRepository", "Error en turnOn", e)
+            throw e
+        }
     }
 
     suspend fun turnOff(lightId: String) {
-        // URL actualizada para que coincida con el código de tu NodeMCU
-        val response = client.get("http://$nodeMcuIp/led/off")
-        // Opcional: puedes imprimir la respuesta para depurar
-        println("Respuesta de NodeMCU (turnOff): ${response.bodyAsText()}")
+        val url = "http://$nodeMcuIp/led/off?id=$lightId"
+        Log.d("ArduinoRepository", "Llamando a: $url")
+        try {
+            withContext(Dispatchers.IO) {
+                client.get(url)
+            }
+            Log.d("ArduinoRepository", "Petición (turnOff) enviada.")
+        } catch (e: Exception) {
+            Log.e("ArduinoRepository", "Error en turnOff", e)
+            throw e
+        }
+    }
+
+    // Método alternativo usando HttpURLConnection para diagnóstico/comparación
+    suspend fun pingWithHttpUrl(path: String = ""): Int = withContext(Dispatchers.IO) {
+        val urlStr = "http://$nodeMcuIp$path"
+        val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
+            connectTimeout = 10_000
+            readTimeout = 10_000
+            requestMethod = "GET"
+        }
+        try {
+            conn.connect()
+            conn.responseCode
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    fun close() {
+        client.close()
     }
 }

@@ -63,6 +63,10 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.room.ktx)
 
+    // Ktor
+    implementation("io.ktor:ktor-client-okhttp:2.3.10")    // engine OkHttp
+    implementation("io.ktor:ktor-client-logging:2.3.10")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
