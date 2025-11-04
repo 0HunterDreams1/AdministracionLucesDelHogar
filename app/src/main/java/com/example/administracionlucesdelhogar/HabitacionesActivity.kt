@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Bundle
 import android.text.InputType
+import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
@@ -87,6 +88,7 @@ class HabitacionesActivity : AppCompatActivity() {
 
     private fun cargarHabitacionesDinamico(gridLayout: GridLayout){
         val lista_habitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
+        val layoutHabitaciones = findViewById<LinearLayout>(R.id.layoutHabitaciones)
         gridLayout.removeAllViews()
         if (lista_habitaciones.isNotEmpty()) {
             gridLayout.visibility = View.VISIBLE
@@ -107,8 +109,16 @@ class HabitacionesActivity : AppCompatActivity() {
                     controladorHabitaciones.actualizarEstado(habitacion, isChecked)
                     Toast.makeText(this, "${habitacion.nombre} está $estado", Toast.LENGTH_SHORT).show()
                 }
+                gridLayout.columnCount = 1
 
-                gridLayout.addView(itemHabitacionView)
+                val params = GridLayout.LayoutParams()
+                params.width = GridLayout.LayoutParams.MATCH_PARENT
+                params.height = GridLayout.LayoutParams.WRAP_CONTENT
+                params.setMargins(0, 0, 0, 16)
+                itemHabitacionView.layoutParams = params
+                layoutHabitaciones.addView(itemHabitacionView)
+
+
             }
 
 
@@ -137,7 +147,11 @@ class HabitacionesActivity : AppCompatActivity() {
 
         val tipos = listOf(
             TipoHabitacion.Cocina,
-            TipoHabitacion.Habitacion
+            TipoHabitacion.Habitacion,
+            TipoHabitacion.Baño,
+            TipoHabitacion.Comedor,
+            TipoHabitacion.Patio,
+            TipoHabitacion.Living
         )
 
         val nombresTipos = tipos.map { it.nombre }
