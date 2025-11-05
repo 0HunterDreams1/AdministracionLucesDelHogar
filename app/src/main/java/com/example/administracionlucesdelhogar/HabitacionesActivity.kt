@@ -28,6 +28,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.administracionlucesdelhogar.controladores.ControladorEscenarios
 import com.example.administracionlucesdelhogar.controladores.ControladorHabitaciones
 import com.example.administracionlucesdelhogar.modelos.Habitacion
 import com.example.administracionlucesdelhogar.modelos.TipoHabitacion
@@ -393,18 +394,60 @@ class HabitacionesActivity : AppCompatActivity() {
 
         AlertDialog.Builder(this)
             .setTitle("Eliminar habitación")
-            .setItems(
-                nombres
-            ) { dialog: DialogInterface?, which: Int ->
+            .setItems(nombres) { dialog: DialogInterface?, which: Int ->
                 val seleccionada: Habitacion = lista[which]
-                controladorHabitaciones.eliminarHabitacion(seleccionada)
-                /** cargarHabitaciones(layoutHabitaciones) **/
-                cargarHabitacionesDinamico(gridLayout)
-                Toast.makeText(
-                    this,
-                    seleccionada.nombre + " eliminada",
-                    Toast.LENGTH_SHORT
-                ).show()
+
+                // Verificar si la habitación está en algún escenario
+                val controladorEscenarios = ControladorEscenarios.getInstance(this)
+                val escenariosConHabitacion = controladorEscenarios.listaEscenarios.filter { escenario ->
+                    escenario.habitaciones.any { it.id == seleccionada.id }
+                }
+
+                if (escenariosConHabitacion.isNotEmpty()) {
+                    // Construyo una lista de nombres de los escenarios
+                    val nombresEscenarios = escenariosConHabitacion.joinToString(", ") { it.nombre ?: "Sin nombre" }
+
+                    AlertDialog.Builder(this)
+                        .setTitle("Confirmar eliminación")
+                        .setMessage(
+                            "La habitación \"${seleccionada.nombre}\" está incluida en los escenarios:\n\n" +
+                                    nombresEscenarios +
+                                    "\n\n¿Desea eliminarla? Se actualizarán los escenarios mencionados."
+                        )
+                        .setPositiveButton("Eliminar") { _, _ ->
+                            // Eliminar la habitación de los escenarios
+                            for (escenario in escenariosConHabitacion) {
+                                escenario.habitaciones.removeAll { it.id == seleccionada.id }
+                            }
+                            controladorEscenarios.guardarCambios()
+
+                            // Eliminar definitivamente la habitación
+                            controladorHabitaciones.eliminarHabitacion(seleccionada)
+
+                            // Refrescar la vista
+                            cargarHabitacionesDinamico(gridLayout)
+
+                            Toast.makeText(
+                                this,
+                                "Habitación \"${seleccionada.nombre}\" eliminada",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        .setNegativeButton("Cancelar", null)
+                        .show()
+                } else {
+                    // No está en ningún escenario, eliminar directamente
+                    AlertDialog.Builder(this)
+                        .setTitle("Confirmar eliminación")
+                        .setMessage("¿Desea eliminar la habitación \"${seleccionada.nombre}\"?")
+                        .setPositiveButton("Eliminar") { _, _ ->
+                            controladorHabitaciones.eliminarHabitacion(seleccionada)
+                            cargarHabitacionesDinamico(gridLayout)
+                            Toast.makeText(this, "Habitación \"${seleccionada.nombre}\" eliminada", Toast.LENGTH_SHORT).show()
+                        }
+                        .setNegativeButton("Cancelar", null)
+                        .show()
+                }
             }
             .setNegativeButton("Cancelar", null)
             .show()
