@@ -257,26 +257,6 @@ class EscenariosActivity : AppCompatActivity() {
             .show()
     }
 
-    /*private fun eliminarEscenario(layoutEscenarios: LinearLayout) {
-        val lista = controladorEscenarios.listaEscenarios
-        if (lista.isEmpty()) {
-            Toast.makeText(this, "No hay escenarios para eliminar", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val nombres = lista.map { it.nombre }.toTypedArray()
-
-        AlertDialog.Builder(this)
-            .setTitle("Eliminar escenario")
-            .setItems(nombres) { _, which ->
-                val seleccionado = lista[which]
-                controladorEscenarios.eliminarEscenario(seleccionado)
-                cargarEscenarios(layoutEscenarios)
-                Toast.makeText(this, "Escenario ${seleccionado.nombre} eliminado", Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton("Cancelar", null)
-            .show()
-    }*/
     private fun eliminarEscenario(layoutEscenarios: LinearLayout) {
         val lista = controladorEscenarios.listaEscenarios
         if (lista.isEmpty()) {
