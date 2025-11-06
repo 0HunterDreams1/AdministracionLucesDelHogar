@@ -173,6 +173,8 @@ class HabitacionesActivity : AppCompatActivity() {
         val inputId = EditText(this)
         inputId.setHint("ID numérico (único)")
         inputId.setInputType(InputType.TYPE_CLASS_NUMBER)
+        inputId.isEnabled = false
+        inputId.setText(controladorHabitaciones.obtenerSiguienteId().toString())
         layout.addView(inputId)
 
         val inputNombre = EditText(this)
@@ -310,6 +312,7 @@ class HabitacionesActivity : AppCompatActivity() {
         inputId.setHint("ID numérico (único)")
         inputId.setInputType(InputType.TYPE_CLASS_NUMBER)
         inputId.setText(habitacion.id.toString())
+        inputId.isEnabled = false
         layout.addView(inputId)
 
         val inputNombre = EditText(this)

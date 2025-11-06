@@ -28,6 +28,18 @@ class ControladorEscenarios private constructor(context: Context) {
         guardarEnPrefs()
     }
 
+    fun obtenerSiguienteId(): Int {
+        var maxId = 0
+
+        for (e in listaEscenarios) {
+            if (e.id > maxId) {
+                maxId = e.id
+            }
+        }
+
+        return maxId + 1
+    }
+
     fun guardarCambios() {
         guardarEnPrefs()
     }

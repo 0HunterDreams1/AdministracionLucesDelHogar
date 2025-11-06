@@ -154,7 +154,12 @@ class EscenariosActivity : AppCompatActivity() {
         val inputId = EditText(this)
         inputId.hint = "ID numérico (único)"
         inputId.inputType = InputType.TYPE_CLASS_NUMBER
-        if (escenario != null) inputId.setText(escenario.id.toString())
+        if (escenario != null) {
+            inputId.setText(escenario.id.toString())
+        } else {
+            inputId.setText(controladorEscenarios.obtenerSiguienteId().toString())
+        }
+        inputId.isEnabled = false
         layout.addView(inputId)
 
         val inputNombre = EditText(this)

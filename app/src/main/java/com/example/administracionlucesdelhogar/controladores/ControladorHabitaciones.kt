@@ -2,7 +2,6 @@ package com.example.administracionlucesdelhogar.controladores
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import com.example.administracionlucesdelhogar.modelos.Habitacion
 import org.json.JSONArray
 import org.json.JSONException
@@ -25,6 +24,18 @@ class ControladorHabitaciones private constructor(context: Context) {
     fun eliminarHabitacion(h: Habitacion?) {
         listaHabitaciones.remove(h)
         guardarEnPrefs()
+    }
+
+    fun obtenerSiguienteId(): Int {
+        var maxId = 0
+
+        for (h in listaHabitaciones) {
+            if (h.id > maxId) {
+                maxId = h.id
+            }
+        }
+
+        return maxId + 1
     }
 
     fun actualizarEstado(h: Habitacion, estado: Boolean) {
