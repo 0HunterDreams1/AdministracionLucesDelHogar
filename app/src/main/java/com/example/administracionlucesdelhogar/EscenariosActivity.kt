@@ -5,7 +5,6 @@ import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Bundle
-import android.text.InputType
 import android.util.Log
 import android.view.MenuItem
 import android.widget.*
@@ -21,7 +20,6 @@ import com.example.administracionlucesdelhogar.modelos.Habitacion
 
 @Suppress("DEPRECATION")
 class EscenariosActivity : AppCompatActivity() {
-
     private lateinit var controladorEscenarios: ControladorEscenarios
     private lateinit var controladorHabitaciones: ControladorHabitaciones
 
@@ -38,12 +36,15 @@ class EscenariosActivity : AppCompatActivity() {
             insets
         }
 
+        // Manejo la barra de acciones
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.navigationIcon?.setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP)
 
+        // Referencia al controlador de escenarios
         controladorEscenarios = ControladorEscenarios.getInstance(this)
+        // Referencia al controlador de habitaciones
         controladorHabitaciones = ControladorHabitaciones.getInstance(this)
 
         val layoutEscenarios = findViewById<LinearLayout>(R.id.layoutEscenarios)
@@ -51,11 +52,18 @@ class EscenariosActivity : AppCompatActivity() {
         val btnEditar = findViewById<Button>(R.id.btnEditarEscenario)
         val btnEliminar = findViewById<Button>(R.id.btnEliminarEscenario)
 
+        // Cargo los escenarios cargados
         cargarEscenarios(layoutEscenarios)
 
-        btnAgregar.setOnClickListener { mostrarDialogoAgregarOEditarEscenario(null, layoutEscenarios) }
-        btnEditar.setOnClickListener { seleccionarEscenarioParaEditar(layoutEscenarios) }
-        btnEliminar.setOnClickListener { eliminarEscenario(layoutEscenarios) }
+        btnAgregar.setOnClickListener {
+            mostrarDialogoAgregarOEditarEscenario(null, layoutEscenarios)
+        }
+        btnEditar.setOnClickListener {
+            seleccionarEscenarioParaEditar(layoutEscenarios)
+        }
+        btnEliminar.setOnClickListener {
+            eliminarEscenario(layoutEscenarios)
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -70,11 +78,12 @@ class EscenariosActivity : AppCompatActivity() {
     private fun cargarEscenarios(layoutEscenarios: LinearLayout) {
         layoutEscenarios.removeAllViews()
 
+        // Recupero las habitaciones y los escenarios
         val lista = controladorEscenarios.listaEscenarios
         val todasHabitaciones = controladorHabitaciones.listaHabitaciones
 
+        // Recorro los escenarios
         for ((index, e) in lista.withIndex()) {
-
             val layout = LinearLayout(this)
             layout.orientation = LinearLayout.HORIZONTAL
             layout.setPadding(10, 10, 10, 10)
@@ -139,11 +148,7 @@ class EscenariosActivity : AppCompatActivity() {
         }
     }
 
-    // FUNCION UNIFICADA: agregar o editar
-    private fun mostrarDialogoAgregarOEditarEscenario(
-        escenario: Escenario?,
-        layoutEscenarios: LinearLayout
-    ) {
+    private fun mostrarDialogoAgregarOEditarEscenario(escenario: Escenario?, layoutEscenarios: LinearLayout) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle(if (escenario == null) "Agregar nuevo escenario" else "Editar escenario")
 
@@ -151,17 +156,25 @@ class EscenariosActivity : AppCompatActivity() {
         layout.orientation = LinearLayout.VERTICAL
         layout.setPadding(50, 40, 50, 10)
 
-        val inputId = EditText(this)
-        inputId.hint = "ID numérico (único)"
-        inputId.inputType = InputType.TYPE_CLASS_NUMBER
+        // Id de escenario
+        var inputId: Int
         if (escenario != null) {
-            inputId.setText(escenario.id.toString())
+            inputId = escenario.id
         } else {
-            inputId.setText(controladorEscenarios.obtenerSiguienteId().toString())
+            inputId = controladorEscenarios.obtenerSiguienteId()
         }
-        inputId.isEnabled = false
-        layout.addView(inputId)
+        val lblIdEscenario = TextView(this)
+        lblIdEscenario.text = "Id: ${inputId}"
+        lblIdEscenario.textSize = 16f
+        lblIdEscenario.setPadding(0, 16, 0, 8)
+        layout.addView(lblIdEscenario)
 
+        // Nombre de escenario
+        val lblNombre = TextView(this)
+        lblNombre.text = "Nombre:"
+        lblNombre.textSize = 16f
+        lblNombre.setPadding(0, 16, 0, 8)
+        layout.addView(lblNombre)
         val inputNombre = EditText(this)
         inputNombre.hint = "Nombre del escenario"
         if (escenario != null) inputNombre.setText(escenario.nombre)
@@ -169,28 +182,29 @@ class EscenariosActivity : AppCompatActivity() {
 
         builder.setView(layout)
 
+        // Defino el botón de confirmación de agregado de escenario
         builder.setPositiveButton("Siguiente") { _, _ ->
-            val idText = inputId.text.toString().trim()
             val nombre = inputNombre.text.toString().trim()
 
-            if (idText.isEmpty() || nombre.isEmpty()) {
-                Toast.makeText(this, "Debes ingresar un ID y un nombre", Toast.LENGTH_SHORT).show()
+            // Verifico que el nombre no haya quedado vacío
+            if (nombre.isEmpty()) {
+                Toast.makeText(this, "Debe ingresar un nombre para el escenario", Toast.LENGTH_SHORT).show()
                 return@setPositiveButton
             }
 
-            val id = idText.toInt()
             // Validar que no exista otro escenario con el mismo ID o nombre
             for (e in controladorEscenarios.listaEscenarios) {
                 if (escenario != null && e == escenario) continue
-                if (e.id == id || e.nombre.equals(nombre, ignoreCase = true)) {
-                    Toast.makeText(this, "Ya existe un escenario con ese ID o nombre", Toast.LENGTH_SHORT).show()
+                if (e.nombre.equals(nombre, ignoreCase = true)) {
+                    Toast.makeText(this, "Ya existe un escenario con ese nombre", Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
             }
 
-            mostrarDialogoSeleccionarHabitaciones(id, nombre, escenario, layoutEscenarios)
+            // Muestro la pantalla de selección de habitaciones
+            mostrarDialogoSeleccionarHabitaciones(inputId, nombre, escenario, layoutEscenarios)
         }
-
+        // Defino el botón de cancelación
         builder.setNegativeButton("Cancelar", null)
         builder.show()
     }
@@ -202,6 +216,7 @@ class EscenariosActivity : AppCompatActivity() {
         layoutEscenarios: LinearLayout
     ) {
         val habitaciones = controladorHabitaciones.listaHabitaciones
+        // Verifico si la lista de escenarios está vacía
         if (habitaciones.isEmpty()) {
             Toast.makeText(this, "No hay habitaciones disponibles", Toast.LENGTH_SHORT).show()
             return
@@ -229,14 +244,14 @@ class EscenariosActivity : AppCompatActivity() {
                     escenarioExistente.nombre = nombre
                     escenarioExistente.habitaciones = seleccionadasList
                     controladorEscenarios.guardarCambios()
-                    Toast.makeText(this, "Escenario $nombre modificado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Escenario \"$nombre\" modificado", Toast.LENGTH_SHORT).show()
                 } else {
                     // AGREGAR: crear nuevo escenario
                     val nuevoEscenario = Escenario(id, nombre, seleccionadasList, false)
                     controladorEscenarios.agregarEscenario(nuevoEscenario)
-                    Toast.makeText(this, "Escenario $nombre agregado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Escenario \"$nombre\" agregado", Toast.LENGTH_SHORT).show()
                 }
-
+                // Recargo los escnarios
                 cargarEscenarios(layoutEscenarios)
             }
             .setNegativeButton("Cancelar", null)
@@ -245,6 +260,7 @@ class EscenariosActivity : AppCompatActivity() {
 
     private fun seleccionarEscenarioParaEditar(layoutEscenarios: LinearLayout) {
         val lista = controladorEscenarios.listaEscenarios
+        // Verifico si la lista de escenarios está vacía
         if (lista.isEmpty()) {
             Toast.makeText(this, "No hay escenarios para editar", Toast.LENGTH_SHORT).show()
             return
@@ -264,6 +280,7 @@ class EscenariosActivity : AppCompatActivity() {
 
     private fun eliminarEscenario(layoutEscenarios: LinearLayout) {
         val lista = controladorEscenarios.listaEscenarios
+        // Verifico si la lista de escenarios está vacía
         if (lista.isEmpty()) {
             Toast.makeText(this, "No hay escenarios para eliminar", Toast.LENGTH_SHORT).show()
             return
