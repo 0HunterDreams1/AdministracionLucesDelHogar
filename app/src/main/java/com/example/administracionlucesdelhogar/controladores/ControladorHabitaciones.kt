@@ -7,6 +7,7 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import androidx.core.content.edit
+import com.example.administracionlucesdelhogar.modelos.CodigoHabitacion
 
 class ControladorHabitaciones private constructor(context: Context) {
     val listaHabitaciones: ArrayList<Habitacion>
@@ -66,6 +67,7 @@ class ControladorHabitaciones private constructor(context: Context) {
                     obj.put("nombre", h.nombre)
                     obj.put("estado", h.estado)
                     obj.put("tipoHabitacion", h.tipoHabitacion)
+                    obj.put("codigoHabitacion", h.codigoHabitacion)
                     jsonArray.put(obj)
                 } catch (e: JSONException) {
                     e.printStackTrace()
@@ -90,7 +92,8 @@ class ControladorHabitaciones private constructor(context: Context) {
                             obj.getInt("id"),
                             obj.getString("nombre"),
                             obj.getBoolean("estado"),
-                            obj.getInt("tipoHabitacion")
+                            obj.getInt("tipoHabitacion"),
+                            obj.getInt("codigoHabitacion")
                         )
                     )
                 }
@@ -99,6 +102,14 @@ class ControladorHabitaciones private constructor(context: Context) {
             }
         }
         return lista
+    }
+
+    fun puedoCargarHabitacion(): Boolean {
+        if (listaHabitaciones.size == CodigoHabitacion.values().size) {
+            return false
+        } else {
+            return true
+        }
     }
 
     companion object {

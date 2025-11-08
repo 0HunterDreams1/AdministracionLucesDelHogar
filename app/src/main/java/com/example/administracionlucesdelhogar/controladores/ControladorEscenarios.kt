@@ -63,6 +63,7 @@ class ControladorEscenarios private constructor(context: Context) {
                         objH.put("nombre", h.nombre)
                         objH.put("estado", h.estado)
                         objH.put("tipoHabitacion", h.tipoHabitacion)
+                        objH.put("codigoHabitacion", h.codigoHabitacion)
                         jsonHabitaciones.put(objH)
                     }
                     obj.put("habitaciones", jsonHabitaciones)
@@ -99,7 +100,8 @@ class ControladorEscenarios private constructor(context: Context) {
                                     objH.getInt("id"),
                                     objH.getString("nombre"),
                                     objH.getBoolean("estado"),
-                                    objH.getInt("tipoHabitacion")
+                                    objH.getInt("tipoHabitacion"),
+                                    objH.getInt("codigoHabitacion")
                                 )
                             )
                         }
