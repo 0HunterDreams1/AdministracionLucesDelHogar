@@ -36,7 +36,7 @@ class ArduinoRepository {
 
     // Llama y no lee el body
     suspend fun turnOn(lightId: String) {
-        val url = "http://$nodeMcuIp/led/on?id=$lightId"
+        val url = "http://$nodeMcuIp/led/on?ids=$lightId"
         Log.d("ArduinoRepository", "Llamando a: $url")
         try {
             withContext(Dispatchers.IO) {
@@ -50,7 +50,7 @@ class ArduinoRepository {
     }
 
     suspend fun turnOff(lightId: String) {
-        val url = "http://$nodeMcuIp/led/off?id=$lightId"
+        val url = "http://$nodeMcuIp/led/off?ids=$lightId"
         Log.d("ArduinoRepository", "Llamando a: $url")
         try {
             withContext(Dispatchers.IO) {
@@ -64,7 +64,7 @@ class ArduinoRepository {
     }
 
     // Método alternativo usando HttpURLConnection para diagnóstico/comparación
-    suspend fun pingWithHttpUrl(path: String = ""): Int = withContext(Dispatchers.IO) {
+    /*suspend fun pingWithHttpUrl(path: String = ""): Int = withContext(Dispatchers.IO) {
         val urlStr = "http://$nodeMcuIp$path"
         val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
             connectTimeout = 10_000
@@ -77,7 +77,7 @@ class ArduinoRepository {
         } finally {
             conn.disconnect()
         }
-    }
+    }*/
 
     fun close() {
         client.close()
