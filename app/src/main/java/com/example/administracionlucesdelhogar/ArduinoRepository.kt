@@ -35,8 +35,8 @@ class ArduinoRepository {
     }
 
     // Llama y no lee el body
-    suspend fun turnOn(lightId: String) {
-        val url = "http://$nodeMcuIp/led/on?ids=$lightId"
+    suspend fun turnOn(lightCode: String) {
+        val url = "http://$nodeMcuIp/led/on?ids=$lightCode"
         Log.d("ArduinoRepository", "Llamando a: $url")
         try {
             withContext(Dispatchers.IO) {
@@ -49,8 +49,8 @@ class ArduinoRepository {
         }
     }
 
-    suspend fun turnOff(lightId: String) {
-        val url = "http://$nodeMcuIp/led/off?ids=$lightId"
+    suspend fun turnOff(lightCode: String) {
+        val url = "http://$nodeMcuIp/led/off?ids=$lightCode"
         Log.d("ArduinoRepository", "Llamando a: $url")
         try {
             withContext(Dispatchers.IO) {

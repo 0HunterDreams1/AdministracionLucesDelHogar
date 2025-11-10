@@ -15,6 +15,7 @@ import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.CompoundButton
 import android.widget.Spinner
 import androidx.appcompat.widget.SwitchCompat
 import android.widget.TextView
@@ -95,16 +96,16 @@ class HabitacionesActivity : AppCompatActivity() {
                 // Ejecutar la llamada de red en IO
                 withContext(Dispatchers.IO) {
                     if (isChecked) {
-                        arduinoRepository.turnOn(habitacion.id.toString())
+                        arduinoRepository.turnOn(habitacion.codigoHabitacion.toString())
                     } else {
-                        arduinoRepository.turnOff(habitacion.id.toString())
+                        arduinoRepository.turnOff(habitacion.codigoHabitacion.toString())
                     }
                 }
 
                 // actualizar modelo solo si la petición fue exitosa
                 controladorHabitaciones.actualizarEstado(habitacion, isChecked)
                 val estado = if (isChecked) "encendida" else "apagada"
-                Toast.makeText(this@HabitacionesActivity, "Luz $estado", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@HabitacionesActivity, "${habitacion.nombre} está $estado", Toast.LENGTH_SHORT).show()
             } catch (e: ClientRequestException) {
                 // 4xx
                 Toast.makeText(this@HabitacionesActivity, "Error en la petición: ${e.message}", Toast.LENGTH_LONG).show()
@@ -158,12 +159,8 @@ class HabitacionesActivity : AppCompatActivity() {
                 // setear estado sin disparar el listener (asegurar estado inicial)
                 switchRoom.setOnCheckedChangeListener(null)
                 switchRoom.isChecked = habitacion.estado
-
-                switchRoom.setOnCheckedChangeListener { _, isChecked ->
-                    val estado = if (isChecked) "encendida" else "apagada"
-                    controladorHabitaciones.actualizarEstado(habitacion, isChecked)
-                    Toast.makeText(this, "${habitacion.nombre} está $estado", Toast.LENGTH_SHORT).show()
-                }
+                // ahora asignar el listener por referencia al metodo definido arriba
+                switchRoom.setOnCheckedChangeListener(this@HabitacionesActivity::onSwitchChanged)
                 gridLayout.columnCount = 1
 
                 val params = GridLayout.LayoutParams()
@@ -171,7 +168,7 @@ class HabitacionesActivity : AppCompatActivity() {
                 params.height = GridLayout.LayoutParams.WRAP_CONTENT
                 params.setMargins(0, 0, 0, 16)
                 itemHabitacionView.layoutParams = params
-                layoutHabitaciones.addView(itemHabitacionView)
+                gridLayout.addView(itemHabitacionView)
             }
         } else {
             gridLayout.visibility = View.GONE

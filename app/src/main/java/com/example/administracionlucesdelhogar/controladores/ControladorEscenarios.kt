@@ -89,7 +89,6 @@ class ControladorEscenarios private constructor(context: Context) {
                 val jsonArray = JSONArray(json)
                 for (i in 0 until jsonArray.length()) {
                     val obj = jsonArray.getJSONObject(i)
-
                     val habitacionesList = ArrayList<Habitacion>()
                     val habitacionesJson = obj.optJSONArray("habitaciones")
                     if (habitacionesJson != null) {

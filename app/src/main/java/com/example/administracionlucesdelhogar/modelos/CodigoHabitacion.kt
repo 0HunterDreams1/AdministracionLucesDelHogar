@@ -10,6 +10,6 @@ enum class CodigoHabitacion(val nombre: String, val codigo: Int) {
     //D4("D4", "2"),
     D5("D5", 14),
     D6("D6", 12),
-    D7("D7", 13),
+    //D7("D7", 13),
     //D8("D8", "15")
 }
