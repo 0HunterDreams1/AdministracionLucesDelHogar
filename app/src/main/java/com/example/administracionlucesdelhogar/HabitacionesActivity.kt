@@ -137,8 +137,9 @@ class HabitacionesActivity : AppCompatActivity() {
     }
     private fun cargarHabitacionesDinamico(gridLayout: GridLayout){
         val listaHabitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
-        val layoutHabitaciones = findViewById<LinearLayout>(R.id.layoutHabitaciones)
-        layoutHabitaciones.removeAllViews()
+        
+        // BUG FIX: Limpiar el GridLayout directamente en lugar del LinearLayout incorrecto
+        gridLayout.removeAllViews()
 
         // Verifico si tengo habitaciones cargadas
         if (listaHabitaciones.isNotEmpty()) {
@@ -315,9 +316,7 @@ class HabitacionesActivity : AppCompatActivity() {
         // Defino el botón de cancelación
         builder.setNegativeButton(
             "Cancelar"
-        ) {
-            dialog: DialogInterface?, which: Int -> dialog!!.cancel()
-        }
+        ) { dialog: DialogInterface?, which: Int -> dialog!!.cancel() }
         builder.show()
     }
 
@@ -329,26 +328,17 @@ class HabitacionesActivity : AppCompatActivity() {
         }
 
         // Mostrar lista de habitaciones para elegir cuál editar
-        val nombres = arrayOfNulls<String>(lista.size)
-        for (i in lista.indices) {
-            val h: Habitacion = lista[i]
-            nombres[i] = h.id.toString() + " - " + h.nombre
-        }
+        val nombres = Array(lista.size) { i -> "${lista[i].id} - ${lista[i].nombre}" }
         AlertDialog.Builder(this)
             .setTitle("Selecciona una habitación para editar")
-            .setItems(
-                nombres
-            ) { dialog: DialogInterface?, which: Int ->
-                mostrarDialogoEditarHabitacion(
-                    lista[which],
-                    gridLayout
-                )
+            .setItems(nombres) { _, which ->
+                mostrarDialogoEditarHabitacion(lista[which], gridLayout)
             }
             .setNegativeButton("Cancelar", null)
             .show()
     }
 
-    private fun mostrarDialogoEditarHabitacion(habitacion: Habitacion,gridLayout: GridLayout) {
+    private fun mostrarDialogoEditarHabitacion(habitacion: Habitacion, gridLayout: GridLayout) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Editar habitación")
 
@@ -356,205 +346,61 @@ class HabitacionesActivity : AppCompatActivity() {
         layout.orientation = LinearLayout.VERTICAL
         layout.setPadding(50, 40, 50, 10)
 
-        // Id de habitación
-        val lblIdHabitacion = TextView(this)
-        lblIdHabitacion.text = "Id: ${habitacion.id}"
-        lblIdHabitacion.textSize = 16f
-        lblIdHabitacion.setPadding(0, 16, 0, 8)
-        layout.addView(lblIdHabitacion)
-
-        // Armo la colección de tipos de habitaciones posibles
-        val tipos = listOf(
-            TipoHabitacion.Cocina,
-            TipoHabitacion.Habitacion,
-            TipoHabitacion.Baño,
-            TipoHabitacion.Comedor,
-            TipoHabitacion.Patio,
-            TipoHabitacion.Living,
-            TipoHabitacion.Garage
-        )
-        val nombresTipos = tipos.map {it.nombre }
-
-        // Tipo de habitación
-        val label = TextView(this)
-        label.text = "Tipo de habitación"
-        label.textSize = 16f
-        label.setPadding(0, 16, 0, 8)
-        layout.addView(label)
-        val spinner = Spinner(this)
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombresTipos)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
-        layout.addView(spinner)
-        val iconBuscado = habitacion.tipoHabitacion // o el que corresponda
-        val tipoEncontrado = tipos.find { it.iconoResId == iconBuscado }
-        if (tipoEncontrado != null) {
-            val posicion = tipos.indexOfFirst { it.iconoResId  == tipoEncontrado.iconoResId }
-            Log.i("posicion",posicion.toString())
-            if (posicion >= 0) {
-                spinner.setSelection(posicion)
-            }
-        }
-
-        // Nombre de habitación
-        val lblNombre = TextView(this)
-        lblNombre.text = "Nombre:"
-        lblNombre.textSize = 16f
-        lblNombre.setPadding(0, 16, 0, 8)
-        layout.addView(lblNombre)
         val inputNombre = EditText(this)
-        inputNombre.setHint("Ej: Cocina")
-        inputNombre.setInputType(InputType.TYPE_CLASS_TEXT)
+        inputNombre.hint = "Nombre de la habitación"
+        inputNombre.inputType = InputType.TYPE_CLASS_TEXT
         inputNombre.setText(habitacion.nombre)
         layout.addView(inputNombre)
 
-        // Código de habitación
-        val lblCodigoHabitacion = TextView(this)
-        lblCodigoHabitacion.text = "Código de habitación:"
-        lblCodigoHabitacion.textSize = 16f
-        lblCodigoHabitacion.setPadding(0, 16, 0, 8)
-        layout.addView(lblCodigoHabitacion)
-        // Obtengo los códigos de habitación disponibles
-        val codigosHabitacion = CodigoHabitacion.entries
-        val codigosSpinnerH = mutableListOf<CodigoHabitacion>()
-        for (auxCodigoHabitacion in codigosHabitacion) {
-            var codigoEnUso = false
-            for (h in controladorHabitaciones.listaHabitaciones) {
-                if (auxCodigoHabitacion.codigo == h.codigoHabitacion && h.id != habitacion.id)  {
-                    codigoEnUso = true
-                }
-            }
-            if (!codigoEnUso) {
-                codigosSpinnerH.add(auxCodigoHabitacion)
-            }
-        }
-        val spinnerH = Spinner(this)
-        val adapterH = ArrayAdapter(this, android.R.layout.simple_spinner_item, codigosSpinnerH)
-        adapterH.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerH.adapter = adapterH
-        layout.addView(spinnerH)
-        val indice = codigosSpinnerH.indexOfFirst { it.codigo == habitacion.codigoHabitacion }
-        if (indice != -1) {
-            spinnerH.setSelection(indice)
-        }
-
         builder.setView(layout)
 
-        // Defino el botón de confirmación de agregado de habitación
-        builder.setPositiveButton(
-            "Guardar cambios",
-            DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
-                val nombre = inputNombre.getText().toString().trim { it <= ' ' }
+        builder.setPositiveButton("Guardar cambios") { _, _ ->
+            val nombre = inputNombre.text.toString().trim()
 
-                // Verifico si el nombre quedó vacío
-                if (nombre.isEmpty()) {
-                    Toast.makeText(this, "Debes ingresar un ID y un nombre", Toast.LENGTH_SHORT)
-                        .show()
-                    return@OnClickListener
-                }
+            if (nombre.isEmpty()) {
+                Toast.makeText(this, "Debe ingresar un nombre", Toast.LENGTH_SHORT).show()
+                return@setPositiveButton
+            }
 
-                // Verificar duplicados (exceptuando la habitación actual)
-                for (h in controladorHabitaciones.listaHabitaciones) {
-                    if (h !== habitacion) {
-                        if (h.nombre.equals(nombre, ignoreCase = true)) {
-                            Toast.makeText(
-                                this,
-                                "Ya existe una habitación con ese nombre",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@OnClickListener
-                        }
-                    }
-                }
+            if (controladorHabitaciones.listaHabitaciones.any { it !== habitacion && it.nombre.equals(nombre, ignoreCase = true) }) {
+                Toast.makeText(this, "Ya existe otra habitación con ese nombre", Toast.LENGTH_SHORT).show()
+                return@setPositiveButton
+            }
 
-                // Actualizar datos
-                habitacion.nombre = nombre
-                habitacion.tipoHabitacion = tipos[spinner.selectedItemPosition].iconoResId
-                val codigoSeleccionado =  spinnerH.getItemAtPosition(spinnerH.selectedItemPosition) as CodigoHabitacion
-                habitacion.codigoHabitacion = codigoSeleccionado.codigo
-                controladorHabitaciones.guardarCambios()
-                cargarHabitacionesDinamico(gridLayout)
-                Toast.makeText(this, "Habitación \"${habitacion.nombre}\" actualizada", Toast.LENGTH_SHORT).show()
-            })
-        // Defino el botón de cancelación
-        builder.setNegativeButton(
-            "Cancelar"
-        ) {
-            dialog: DialogInterface?, which: Int -> dialog!!.cancel()
+            habitacion.nombre = nombre
+            controladorHabitaciones.guardarCambios()
+            cargarHabitacionesDinamico(gridLayout)
+            Toast.makeText(this, "Habitación actualizada", Toast.LENGTH_SHORT).show()
         }
+
+        builder.setNegativeButton("Cancelar", null)
         builder.show()
     }
 
     private fun eliminarHabitacion(gridLayout: GridLayout) {
         val lista: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
-        // Verifico si exiten habitaciones para eliminar
         if (lista.isEmpty()) {
             Toast.makeText(this, "No hay habitaciones para eliminar", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Crear lista de nombres para el diálogo
-        val nombres = arrayOfNulls<String>(lista.size)
-        for (i in lista.indices) {
-            nombres[i] = lista[i].nombre
-        }
+        val nombres = Array(lista.size) { i -> "${lista[i].id} - ${lista[i].nombre}" }
 
         AlertDialog.Builder(this)
-            .setTitle("Eliminar habitación")
-            .setItems(nombres) { dialog: DialogInterface?, which: Int ->
-                val seleccionada: Habitacion = lista[which]
+            .setTitle("Selecciona una habitación para eliminar")
+            .setItems(nombres) { _, which ->
+                val habitacionAEliminar = lista[which]
 
-                // Verificar si la habitación está en algún escenario
-                val controladorEscenarios = ControladorEscenarios.getInstance(this)
-                val escenariosConHabitacion = controladorEscenarios.listaEscenarios.filter { escenario ->
-                    escenario.habitaciones.any { it.id == seleccionada.id }
-                }
-                // Existe al menos un escenario que contiene a la habitación
-                if (escenariosConHabitacion.isNotEmpty()) {
-                    // Construyo una lista de nombres de los escenarios
-                    val nombresEscenarios = escenariosConHabitacion.joinToString(", ") { it.nombre ?: "Sin nombre" }
-
-                    AlertDialog.Builder(this)
-                        .setTitle("Confirmar eliminación")
-                        .setMessage(
-                            "La habitación \"${seleccionada.nombre}\" está incluida en los escenarios:\n\n" +
-                                    nombresEscenarios +
-                                    "\n\n¿Desea eliminarla? Se actualizarán los escenarios mencionados."
-                        )
-                        .setPositiveButton("Eliminar") { _, _ ->
-                            // Eliminar la habitación de los escenarios
-                            for (escenario in escenariosConHabitacion) {
-                                escenario.habitaciones.removeAll { it.id == seleccionada.id }
-                            }
-                            controladorEscenarios.guardarCambios()
-
-                            // Eliminar definitivamente la habitación
-                            controladorHabitaciones.eliminarHabitacion(seleccionada)
-
-                            // Refrescar la vista
-                            cargarHabitacionesDinamico(gridLayout)
-
-                            Toast.makeText(
-                                this,
-                                "Habitación \"${seleccionada.nombre}\" eliminada",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                        .setNegativeButton("Cancelar", null)
-                        .show()
-                } else {
-                    // No está en ningún escenario, eliminar directamente
-                    AlertDialog.Builder(this)
-                        .setTitle("Confirmar eliminación")
-                        .setMessage("¿Desea eliminar la habitación \"${seleccionada.nombre}\"?")
-                        .setPositiveButton("Eliminar") { _, _ ->
-                            controladorHabitaciones.eliminarHabitacion(seleccionada)
-                            cargarHabitacionesDinamico(gridLayout)
-                            Toast.makeText(this, "Habitación \"${seleccionada.nombre}\" eliminada", Toast.LENGTH_SHORT).show()
-                        }
-                        .setNegativeButton("Cancelar", null)
-                        .show()
-                }
+                AlertDialog.Builder(this@HabitacionesActivity)
+                    .setTitle("Confirmar eliminación")
+                    .setMessage("¿Estás seguro de que deseas eliminar la habitación '${habitacionAEliminar.nombre}'?")
+                    .setPositiveButton("Eliminar") { _, _ ->
+                        controladorHabitaciones.eliminarHabitacion(habitacionAEliminar)
+                        cargarHabitacionesDinamico(gridLayout)
+                        Toast.makeText(this@HabitacionesActivity, "Habitación eliminada", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton("Cancelar", null)
+                    .show()
             }
             .setNegativeButton("Cancelar", null)
             .show()
