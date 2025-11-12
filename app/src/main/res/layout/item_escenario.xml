@@ -17,6 +17,7 @@
         android:layout_marginStart="8dp"
         android:ellipsize="end"
         android:singleLine="true"
+        android:textSize="13dp"
         />
 
     <androidx.appcompat.widget.SwitchCompat

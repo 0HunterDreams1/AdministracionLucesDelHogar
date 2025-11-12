@@ -19,7 +19,6 @@ import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.CompoundButton
 import android.widget.Spinner
 import androidx.appcompat.widget.SwitchCompat
 import android.widget.TextView
@@ -142,18 +141,14 @@ class HabitacionesActivity : AppCompatActivity() {
         switchRoom.setOnCheckedChangeListener(this@HabitacionesActivity::onSwitchChanged)
     }
     private fun cargarHabitacionesDinamico(gridLayout: GridLayout){
-        val listaHabitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
+        val lista_habitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
         val layoutHabitaciones = findViewById<LinearLayout>(R.id.layoutHabitaciones)
         layoutHabitaciones.removeAllViews()
 
         // Verifico si tengo habitaciones cargadas
-        if (listaHabitaciones.isNotEmpty()) {
-        val lista_habitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
-        val layoutHabitaciones = findViewById<LinearLayout>(R.id.layoutHabitaciones)
-        layoutHabitaciones.removeAllViews()
         if (lista_habitaciones.isNotEmpty()) {
             gridLayout.visibility = View.VISIBLE
-            for (habitacion in listaHabitaciones) {
+            for (habitacion in lista_habitaciones) {
                 val itemHabitacionView = layoutInflater.inflate(R.layout.item_habitacion, gridLayout, false)
                 val textView = itemHabitacionView.findViewById<TextView>(R.id.textRoomName)
                 val switchRoom = itemHabitacionView.findViewById<SwitchCompat>(R.id.switchRoom)

@@ -43,7 +43,8 @@
         app:layout_constraintTop_toBottomOf="@+id/txtPrincipal"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/sviewEscenarios"/>
+        app:layout_constraintBottom_toTopOf="@+id/sviewEscenarios"
+        />
 
     <ScrollView
         android:id="@+id/sviewEscenarios"
