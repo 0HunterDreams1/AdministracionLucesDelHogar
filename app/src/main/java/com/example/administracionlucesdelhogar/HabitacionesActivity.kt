@@ -325,7 +325,9 @@ class HabitacionesActivity : AppCompatActivity() {
         // Defino el botón de cancelación
         builder.setNegativeButton(
             "Cancelar"
-        ) { dialog: DialogInterface?, which: Int -> dialog!!.cancel() }
+        ) {
+            dialog: DialogInterface?, which: Int -> dialog!!.cancel()
+        }
         builder.show()
     }
 
@@ -337,17 +339,26 @@ class HabitacionesActivity : AppCompatActivity() {
         }
 
         // Mostrar lista de habitaciones para elegir cuál editar
-        val nombres = Array(lista.size) { i -> "${lista[i].id} - ${lista[i].nombre}" }
+        val nombres = arrayOfNulls<String>(lista.size)
+        for (i in lista.indices) {
+            val h: Habitacion = lista[i]
+            nombres[i] = h.id.toString() + " - " + h.nombre
+        }
         AlertDialog.Builder(this)
             .setTitle("Selecciona una habitación para editar")
-            .setItems(nombres) { _, which ->
-                mostrarDialogoEditarHabitacion(lista[which], gridLayout)
+            .setItems(
+                nombres
+            ) { dialog: DialogInterface?, which: Int ->
+                mostrarDialogoEditarHabitacion(
+                    lista[which],
+                    gridLayout
+                )
             }
             .setNegativeButton("Cancelar", null)
             .show()
     }
 
-    private fun mostrarDialogoEditarHabitacion(habitacion: Habitacion, gridLayout: GridLayout) {
+    private fun mostrarDialogoEditarHabitacion(habitacion: Habitacion,gridLayout: GridLayout) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Editar habitación")
 
@@ -365,24 +376,21 @@ class HabitacionesActivity : AppCompatActivity() {
             TipoHabitacion.Living,
             TipoHabitacion.Garage
         )
-
         val nombresTipos = tipos.map {it.nombre }
+
         // Tipo de habitación
         val label = TextView(this)
         label.text = "Tipo de habitación"
-        label.setTextSize(16f)
+        label.textSize = 16f
         label.setPadding(0, 16, 0, 8)
         layout.addView(label)
-
         val spinner = Spinner(this)
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombresTipos)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = adapter
         layout.addView(spinner)
-
         val iconBuscado = habitacion.tipoHabitacion // o el que corresponda
         val tipoEncontrado = tipos.find { it.iconoResId == iconBuscado }
-
         if (tipoEncontrado != null) {
             val posicion = tipos.indexOfFirst { it.iconoResId  == tipoEncontrado.iconoResId }
             Log.i("posicion",posicion.toString())
@@ -391,12 +399,12 @@ class HabitacionesActivity : AppCompatActivity() {
             }
         }
 
-        val inputId = EditText(this)
-        inputId.setHint("ID numérico (único)")
-        inputId.setInputType(InputType.TYPE_CLASS_NUMBER)
-        inputId.setText(habitacion.id.toString())
-        layout.addView(inputId)
-
+        // Nombre de habitación
+        val lblNombre = TextView(this)
+        lblNombre.text = "Nombre:"
+        lblNombre.textSize = 16f
+        lblNombre.setPadding(0, 16, 0, 8)
+        layout.addView(lblNombre)
         val inputNombre = EditText(this)
         inputNombre.setHint("Ej: Cocina")
         inputNombre.setInputType(InputType.TYPE_CLASS_TEXT)
