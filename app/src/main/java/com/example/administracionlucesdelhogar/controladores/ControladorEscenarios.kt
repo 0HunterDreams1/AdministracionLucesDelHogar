@@ -28,6 +28,18 @@ class ControladorEscenarios private constructor(context: Context) {
         guardarEnPrefs()
     }
 
+    fun obtenerSiguienteId(): Int {
+        var maxId = 0
+
+        for (e in listaEscenarios) {
+            if (e.id > maxId) {
+                maxId = e.id
+            }
+        }
+
+        return maxId + 1
+    }
+
     fun guardarCambios() {
         guardarEnPrefs()
     }
@@ -51,6 +63,7 @@ class ControladorEscenarios private constructor(context: Context) {
                         objH.put("nombre", h.nombre)
                         objH.put("estado", h.estado)
                         objH.put("tipoHabitacion", h.tipoHabitacion)
+                        objH.put("codigoHabitacion", h.codigoHabitacion)
                         jsonHabitaciones.put(objH)
                     }
                     obj.put("habitaciones", jsonHabitaciones)
@@ -76,7 +89,6 @@ class ControladorEscenarios private constructor(context: Context) {
                 val jsonArray = JSONArray(json)
                 for (i in 0 until jsonArray.length()) {
                     val obj = jsonArray.getJSONObject(i)
-
                     val habitacionesList = ArrayList<Habitacion>()
                     val habitacionesJson = obj.optJSONArray("habitaciones")
                     if (habitacionesJson != null) {
@@ -87,7 +99,8 @@ class ControladorEscenarios private constructor(context: Context) {
                                     objH.getInt("id"),
                                     objH.getString("nombre"),
                                     objH.getBoolean("estado"),
-                                    objH.getInt("tipoHabitacion")
+                                    objH.getInt("tipoHabitacion"),
+                                    objH.getInt("codigoHabitacion")
                                 )
                             )
                         }
