@@ -6,7 +6,6 @@ class Escenario(id: Int, nombre: String, habitaciones: ArrayList<Habitacion>, es
     var habitaciones: ArrayList<Habitacion> = ArrayList()
     var estado: Boolean = false
 
-
     /**
      * Constructor
      */
