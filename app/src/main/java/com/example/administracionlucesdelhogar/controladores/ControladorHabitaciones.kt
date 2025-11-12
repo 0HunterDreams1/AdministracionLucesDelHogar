@@ -2,12 +2,12 @@ package com.example.administracionlucesdelhogar.controladores
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import com.example.administracionlucesdelhogar.modelos.Habitacion
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import androidx.core.content.edit
-import com.example.administracionlucesdelhogar.modelos.CodigoHabitacion
 
 class ControladorHabitaciones private constructor(context: Context) {
     val listaHabitaciones: ArrayList<Habitacion>
@@ -25,18 +25,6 @@ class ControladorHabitaciones private constructor(context: Context) {
     fun eliminarHabitacion(h: Habitacion?) {
         listaHabitaciones.remove(h)
         guardarEnPrefs()
-    }
-
-    fun obtenerSiguienteId(): Int {
-        var maxId = 0
-
-        for (h in listaHabitaciones) {
-            if (h.id > maxId) {
-                maxId = h.id
-            }
-        }
-
-        return maxId + 1
     }
 
     fun actualizarEstado(h: Habitacion, estado: Boolean) {
@@ -67,7 +55,6 @@ class ControladorHabitaciones private constructor(context: Context) {
                     obj.put("nombre", h.nombre)
                     obj.put("estado", h.estado)
                     obj.put("tipoHabitacion", h.tipoHabitacion)
-                    obj.put("codigoHabitacion", h.codigoHabitacion)
                     jsonArray.put(obj)
                 } catch (e: JSONException) {
                     e.printStackTrace()
@@ -92,8 +79,7 @@ class ControladorHabitaciones private constructor(context: Context) {
                             obj.getInt("id"),
                             obj.getString("nombre"),
                             obj.getBoolean("estado"),
-                            obj.getInt("tipoHabitacion"),
-                            obj.getInt("codigoHabitacion")
+                            obj.getInt("tipoHabitacion")
                         )
                     )
                 }
@@ -102,14 +88,6 @@ class ControladorHabitaciones private constructor(context: Context) {
             }
         }
         return lista
-    }
-
-    fun puedoCargarHabitacion(): Boolean {
-        if (listaHabitaciones.size == CodigoHabitacion.values().size) {
-            return false
-        } else {
-            return true
-        }
     }
 
     companion object {

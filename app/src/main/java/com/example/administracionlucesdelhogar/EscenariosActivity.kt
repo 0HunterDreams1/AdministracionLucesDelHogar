@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.MenuItem
 import android.widget.*
@@ -13,18 +14,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
 import com.example.administracionlucesdelhogar.controladores.ControladorEscenarios
 import com.example.administracionlucesdelhogar.controladores.ControladorHabitaciones
 import com.example.administracionlucesdelhogar.modelos.Escenario
 import com.example.administracionlucesdelhogar.modelos.Habitacion
-import kotlinx.coroutines.launch
 
 @Suppress("DEPRECATION")
 class EscenariosActivity : AppCompatActivity() {
+
     private lateinit var controladorEscenarios: ControladorEscenarios
     private lateinit var controladorHabitaciones: ControladorHabitaciones
-    private val arduinoRepository = ArduinoRepository() // Repositorio para peticiones de red
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,22 +53,9 @@ class EscenariosActivity : AppCompatActivity() {
 
         cargarEscenarios(layoutEscenarios)
 
-        btnAgregar.setOnClickListener {
-            mostrarDialogoAgregarOEditarEscenario(null, layoutEscenarios)
-        }
-        btnEditar.setOnClickListener {
-            seleccionarEscenarioParaEditar(layoutEscenarios)
-        }
-        btnEliminar.setOnClickListener {
-            eliminarEscenario(layoutEscenarios)
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // Recargar escenarios cada vez que la actividad se vuelve visible
-        val layoutEscenarios = findViewById<LinearLayout>(R.id.layoutEscenarios)
-        cargarEscenarios(layoutEscenarios)
+        btnAgregar.setOnClickListener { mostrarDialogoAgregarOEditarEscenario(null, layoutEscenarios) }
+        btnEditar.setOnClickListener { seleccionarEscenarioParaEditar(layoutEscenarios) }
+        btnEliminar.setOnClickListener { eliminarEscenario(layoutEscenarios) }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -84,17 +70,10 @@ class EscenariosActivity : AppCompatActivity() {
     private fun cargarEscenarios(layoutEscenarios: LinearLayout) {
         layoutEscenarios.removeAllViews()
 
-        val listaEscenarios = controladorEscenarios.listaEscenarios
+        val lista = controladorEscenarios.listaEscenarios
         val todasHabitaciones = controladorHabitaciones.listaHabitaciones
 
-        // Obtener el conjunto de códigos de habitaciones que están actualmente encendidas
-        val habitacionesOnCodes = todasHabitaciones.filter { it.estado }.map { it.codigoHabitacion.toString() }.toSet()
-
-        for ((index, escenario) in listaEscenarios.withIndex()) {
-            // Lógica para determinar si un escenario está activo
-            val escenarioCodes = escenario.habitaciones.map { it.codigoHabitacion.toString() }.toSet()
-            val isScenarioActive = habitacionesOnCodes.isNotEmpty() && habitacionesOnCodes == escenarioCodes
-            escenario.estado = isScenarioActive
+        for ((index, e) in lista.withIndex()) {
 
             val layout = LinearLayout(this)
             layout.orientation = LinearLayout.HORIZONTAL
@@ -105,68 +84,52 @@ class EscenariosActivity : AppCompatActivity() {
             )
 
             val tv = TextView(this)
-            tv.text = "(${escenario.id}) ${escenario.nombre} - ${escenario.habitaciones.size} habitaciones"
+            tv.text = "(${e.id}) ${e.nombre} - ${e.habitaciones.size} habitaciones"
             tv.textSize = 18f
             tv.setTextColor(Color.BLACK)
-            val tvParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            val tvParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
             tv.layoutParams = tvParams
 
             val switch = Switch(this)
-            switch.isChecked = escenario.estado
+            switch.isChecked = e.estado
+            switch.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) {
+                    // Apagar todos los demás escenarios
+                    for ((i, otro) in lista.withIndex()) {
+                        otro.estado = (i == index)
+                    }
 
-            switch.setOnCheckedChangeListener { buttonView, isChecked ->
-                buttonView.isEnabled = false // Deshabilitar para evitar interacciones repetidas
-
-                lifecycleScope.launch {
-                    try {
-                        if (isChecked) {
-                            // --- ACTIVAR ESCENARIO ---
-                            val codesToTurnOn = escenario.habitaciones.map { it.codigoHabitacion.toString() }
-
-
-                            // Enviar peticiones a NodeMCU
-                            if (codesToTurnOn.isNotEmpty()) arduinoRepository.turnOn(codesToTurnOn.joinToString(","))
-
-                            // Si la red fue exitosa, actualizar el modelo y la UI
-                            runOnUiThread {
-                                listaEscenarios.forEachIndexed { i, other -> other.estado = (i == index) }
-                                todasHabitaciones.forEach { h -> h.estado = codesToTurnOn.contains(h.codigoHabitacion.toString()) }
-                                controladorEscenarios.guardarCambios()
-                                controladorHabitaciones.guardarCambios()
-                                Toast.makeText(this@EscenariosActivity, "Escenario '${escenario.nombre}' activado", Toast.LENGTH_SHORT).show()
-                                cargarEscenarios(layoutEscenarios) // Recargar UI
-                            }
+                    // Actualizar estados de las habitaciones
+                    for (h in todasHabitaciones) {
+                        h.estado = e.habitaciones.any { it.id == h.id }
+                        if (h.estado) {
+                            Log.i("EscenariosActivity.cargarHabitaciones", "Enciendo habitación ${h.id}")
                         } else {
-                            // --- DESACTIVAR ESCENARIO ---
-                            val codesToTurnOff = escenario.habitaciones.map { it.codigoHabitacion.toString() }
-
-                            if (codesToTurnOff.isNotEmpty()) arduinoRepository.turnOff(codesToTurnOff.joinToString(","))
-
-                            // Si la red fue exitosa, actualizar el modelo y la UI
-                            runOnUiThread {
-                                escenario.estado = false
-                                escenario.habitaciones.forEach { h ->
-                                    todasHabitaciones.find { it.id == h.id }?.estado = false
-                                }
-                                controladorEscenarios.guardarCambios()
-                                controladorHabitaciones.guardarCambios()
-                                Toast.makeText(this@EscenariosActivity, "Escenario '${escenario.nombre}' desactivado", Toast.LENGTH_SHORT).show()
-                                cargarEscenarios(layoutEscenarios) // Recargar UI
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Log.e("EscenariosActivity", "Error de red al cambiar escenario", e)
-                        // Si la red falla, mostrar error y recargar la UI para revertir el cambio
-                        runOnUiThread {
-                            Toast.makeText(this@EscenariosActivity, "Error de red: ${e.message}", Toast.LENGTH_LONG).show()
-                            cargarEscenarios(layoutEscenarios)
-                        }
-                    } finally {
-                        // Volver a habilitar el switch después de la operación
-                        runOnUiThread {
-                            buttonView.isEnabled = true
+                            Log.i("EscenariosActivity.cargarHabitaciones", "Apago habitación ${h.id}")
                         }
                     }
+
+                    controladorEscenarios.guardarCambios()
+                    controladorHabitaciones.guardarCambios() // asegúrate de tener este método
+                    // Recargar la UI
+                    cargarEscenarios(layoutEscenarios)
+                    Toast.makeText(this, "Escenario ${e.nombre} activado", Toast.LENGTH_SHORT).show()
+                } else {
+                    // Permitir apagar el escenario actual y apagar sus habitaciones
+                    e.estado = false
+                    for (h in todasHabitaciones) {
+                        if (e.habitaciones.any { it.id == h.id }) {
+                            h.estado = false
+                        }
+                    }
+                    controladorEscenarios.guardarCambios()
+                    controladorHabitaciones.guardarCambios()
+                    Toast.makeText(this, "Escenario ${e.nombre} desactivado", Toast.LENGTH_SHORT).show()
+                    cargarEscenarios(layoutEscenarios)
                 }
             }
 
@@ -176,7 +139,11 @@ class EscenariosActivity : AppCompatActivity() {
         }
     }
 
-    private fun mostrarDialogoAgregarOEditarEscenario(escenario: Escenario?, layoutEscenarios: LinearLayout) {
+    // FUNCION UNIFICADA: agregar o editar
+    private fun mostrarDialogoAgregarOEditarEscenario(
+        escenario: Escenario?,
+        layoutEscenarios: LinearLayout
+    ) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle(if (escenario == null) "Agregar nuevo escenario" else "Editar escenario")
 
@@ -184,39 +151,41 @@ class EscenariosActivity : AppCompatActivity() {
         layout.orientation = LinearLayout.VERTICAL
         layout.setPadding(50, 40, 50, 10)
 
-        val inputId: Int = escenario?.id ?: controladorEscenarios.obtenerSiguienteId()
-        val lblIdEscenario = TextView(this)
-        lblIdEscenario.text = "Id: $inputId"
-        lblIdEscenario.textSize = 16f
-        lblIdEscenario.setPadding(0, 16, 0, 8)
-        layout.addView(lblIdEscenario)
+        val inputId = EditText(this)
+        inputId.hint = "ID numérico (único)"
+        inputId.inputType = InputType.TYPE_CLASS_NUMBER
+        if (escenario != null) inputId.setText(escenario.id.toString())
+        layout.addView(inputId)
 
-        val lblNombre = TextView(this)
-        lblNombre.text = "Nombre:"
-        lblNombre.textSize = 16f
-        lblNombre.setPadding(0, 16, 0, 8)
-        layout.addView(lblNombre)
         val inputNombre = EditText(this)
         inputNombre.hint = "Nombre del escenario"
-        escenario?.let { inputNombre.setText(it.nombre) }
+        if (escenario != null) inputNombre.setText(escenario.nombre)
         layout.addView(inputNombre)
 
         builder.setView(layout)
 
         builder.setPositiveButton("Siguiente") { _, _ ->
+            val idText = inputId.text.toString().trim()
             val nombre = inputNombre.text.toString().trim()
-            if (nombre.isEmpty()) {
-                Toast.makeText(this, "Debe ingresar un nombre para el escenario", Toast.LENGTH_SHORT).show()
+
+            if (idText.isEmpty() || nombre.isEmpty()) {
+                Toast.makeText(this, "Debes ingresar un ID y un nombre", Toast.LENGTH_SHORT).show()
                 return@setPositiveButton
             }
 
-            if (controladorEscenarios.listaEscenarios.any { it.nombre.equals(nombre, true) && it.id != inputId }) {
-                Toast.makeText(this, "Ya existe un escenario con ese nombre", Toast.LENGTH_SHORT).show()
-                return@setPositiveButton
+            val id = idText.toInt()
+            // Validar que no exista otro escenario con el mismo ID o nombre
+            for (e in controladorEscenarios.listaEscenarios) {
+                if (escenario != null && e == escenario) continue
+                if (e.id == id || e.nombre.equals(nombre, ignoreCase = true)) {
+                    Toast.makeText(this, "Ya existe un escenario con ese ID o nombre", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
             }
 
-            mostrarDialogoSeleccionarHabitaciones(inputId, nombre, escenario, layoutEscenarios)
+            mostrarDialogoSeleccionarHabitaciones(id, nombre, escenario, layoutEscenarios)
         }
+
         builder.setNegativeButton("Cancelar", null)
         builder.show()
     }
@@ -246,21 +215,23 @@ class EscenariosActivity : AppCompatActivity() {
             .setPositiveButton("Guardar") { _, _ ->
                 val seleccionadasList = ArrayList<Habitacion>()
                 for (i in seleccionadas.indices) {
-                    if (seleccionadas[i]) {
-                        seleccionadasList.add(habitaciones[i])
-                    }
+                    if (seleccionadas[i]) seleccionadasList.add(habitaciones[i])
                 }
 
                 if (escenarioExistente != null) {
+                    // EDITAR: reemplazar los datos del escenario existente
+                    escenarioExistente.id = id
                     escenarioExistente.nombre = nombre
                     escenarioExistente.habitaciones = seleccionadasList
                     controladorEscenarios.guardarCambios()
-                    Toast.makeText(this, "Escenario '$nombre' modificado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Escenario $nombre modificado", Toast.LENGTH_SHORT).show()
                 } else {
+                    // AGREGAR: crear nuevo escenario
                     val nuevoEscenario = Escenario(id, nombre, seleccionadasList, false)
                     controladorEscenarios.agregarEscenario(nuevoEscenario)
-                    Toast.makeText(this, "Escenario '$nombre' agregado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Escenario $nombre agregado", Toast.LENGTH_SHORT).show()
                 }
+
                 cargarEscenarios(layoutEscenarios)
             }
             .setNegativeButton("Cancelar", null)
@@ -300,6 +271,7 @@ class EscenariosActivity : AppCompatActivity() {
             .setItems(nombres) { _, which ->
                 val seleccionado = lista[which]
 
+                // Confirmación antes de eliminar
                 AlertDialog.Builder(this)
                     .setTitle("Confirmar eliminación")
                     .setMessage("¿Desea eliminar el escenario \"${seleccionado.nombre}\"?")

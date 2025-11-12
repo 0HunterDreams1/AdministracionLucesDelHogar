@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <EditText
+        android:id="@+id/editIdEscenario"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/id_del_escenario"
+        android:inputType="number" />
+
+    <EditText
+        android:id="@+id/editNombreEscenario"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/nombre_del_escenario" />
+
+
+    <!-- Aquí podrías agregar dinámicamente los checkboxes de habitaciones -->
+    <!-- 🔽 ScrollView para los checkboxes -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_marginTop="16dp">
+
+        <LinearLayout
+            android:id="@+id/contenedorHabitaciones"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <!-- Aquí se agregan dinámicamente los checkboxes -->
+        </LinearLayout>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/botonGuardar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/guardar" />
+</LinearLayout>
+
+
+

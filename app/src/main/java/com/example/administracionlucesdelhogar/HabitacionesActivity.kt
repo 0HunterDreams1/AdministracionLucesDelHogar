@@ -1,5 +1,6 @@
 package com.example.administracionlucesdelhogar
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.DialogInterface
 import android.graphics.Color
@@ -7,10 +8,13 @@ import android.graphics.PorterDuff
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.ImageView
@@ -31,6 +35,7 @@ import com.example.administracionlucesdelhogar.controladores.ControladorHabitaci
 import com.example.administracionlucesdelhogar.modelos.CodigoHabitacion
 import com.example.administracionlucesdelhogar.modelos.Habitacion
 import com.example.administracionlucesdelhogar.modelos.TipoHabitacion
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -70,6 +75,7 @@ class HabitacionesActivity : AppCompatActivity() {
         // Cargo las habitaciones guardadas
         cargarHabitacionesDinamico(gridLayout)
 
+        val layoutHabitaciones = findViewById<LinearLayout>(R.id.layoutHabitaciones)
         // Informo la cantidad de posibles habitaciones a cargar
         val txtSecundario = findViewById<TextView>(R.id.txtSecundario)
         txtSecundario.text = "* Puede agregar hasta ${CodigoHabitacion.entries.size} habitaciones."
@@ -142,6 +148,10 @@ class HabitacionesActivity : AppCompatActivity() {
 
         // Verifico si tengo habitaciones cargadas
         if (listaHabitaciones.isNotEmpty()) {
+        val lista_habitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
+        val layoutHabitaciones = findViewById<LinearLayout>(R.id.layoutHabitaciones)
+        layoutHabitaciones.removeAllViews()
+        if (lista_habitaciones.isNotEmpty()) {
             gridLayout.visibility = View.VISIBLE
             for (habitacion in listaHabitaciones) {
                 val itemHabitacionView = layoutInflater.inflate(R.layout.item_habitacion, gridLayout, false)
@@ -168,7 +178,7 @@ class HabitacionesActivity : AppCompatActivity() {
                 params.height = GridLayout.LayoutParams.WRAP_CONTENT
                 params.setMargins(0, 0, 0, 16)
                 itemHabitacionView.layoutParams = params
-                gridLayout.addView(itemHabitacionView)
+                layoutHabitaciones.addView(itemHabitacionView)
             }
         } else {
             gridLayout.visibility = View.GONE
@@ -315,9 +325,7 @@ class HabitacionesActivity : AppCompatActivity() {
         // Defino el botón de cancelación
         builder.setNegativeButton(
             "Cancelar"
-        ) {
-            dialog: DialogInterface?, which: Int -> dialog!!.cancel()
-        }
+        ) { dialog: DialogInterface?, which: Int -> dialog!!.cancel() }
         builder.show()
     }
 
@@ -329,39 +337,23 @@ class HabitacionesActivity : AppCompatActivity() {
         }
 
         // Mostrar lista de habitaciones para elegir cuál editar
-        val nombres = arrayOfNulls<String>(lista.size)
-        for (i in lista.indices) {
-            val h: Habitacion = lista[i]
-            nombres[i] = h.id.toString() + " - " + h.nombre
-        }
+        val nombres = Array(lista.size) { i -> "${lista[i].id} - ${lista[i].nombre}" }
         AlertDialog.Builder(this)
             .setTitle("Selecciona una habitación para editar")
-            .setItems(
-                nombres
-            ) { dialog: DialogInterface?, which: Int ->
-                mostrarDialogoEditarHabitacion(
-                    lista[which],
-                    gridLayout
-                )
+            .setItems(nombres) { _, which ->
+                mostrarDialogoEditarHabitacion(lista[which], gridLayout)
             }
             .setNegativeButton("Cancelar", null)
             .show()
     }
 
-    private fun mostrarDialogoEditarHabitacion(habitacion: Habitacion,gridLayout: GridLayout) {
+    private fun mostrarDialogoEditarHabitacion(habitacion: Habitacion, gridLayout: GridLayout) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Editar habitación")
 
         val layout = LinearLayout(this)
         layout.orientation = LinearLayout.VERTICAL
         layout.setPadding(50, 40, 50, 10)
-
-        // Id de habitación
-        val lblIdHabitacion = TextView(this)
-        lblIdHabitacion.text = "Id: ${habitacion.id}"
-        lblIdHabitacion.textSize = 16f
-        lblIdHabitacion.setPadding(0, 16, 0, 8)
-        layout.addView(lblIdHabitacion)
 
         // Armo la colección de tipos de habitaciones posibles
         val tipos = listOf(
@@ -373,21 +365,24 @@ class HabitacionesActivity : AppCompatActivity() {
             TipoHabitacion.Living,
             TipoHabitacion.Garage
         )
-        val nombresTipos = tipos.map {it.nombre }
 
+        val nombresTipos = tipos.map {it.nombre }
         // Tipo de habitación
         val label = TextView(this)
         label.text = "Tipo de habitación"
-        label.textSize = 16f
+        label.setTextSize(16f)
         label.setPadding(0, 16, 0, 8)
         layout.addView(label)
+
         val spinner = Spinner(this)
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombresTipos)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = adapter
         layout.addView(spinner)
+
         val iconBuscado = habitacion.tipoHabitacion // o el que corresponda
         val tipoEncontrado = tipos.find { it.iconoResId == iconBuscado }
+
         if (tipoEncontrado != null) {
             val posicion = tipos.indexOfFirst { it.iconoResId  == tipoEncontrado.iconoResId }
             Log.i("posicion",posicion.toString())
@@ -396,12 +391,12 @@ class HabitacionesActivity : AppCompatActivity() {
             }
         }
 
-        // Nombre de habitación
-        val lblNombre = TextView(this)
-        lblNombre.text = "Nombre:"
-        lblNombre.textSize = 16f
-        lblNombre.setPadding(0, 16, 0, 8)
-        layout.addView(lblNombre)
+        val inputId = EditText(this)
+        inputId.setHint("ID numérico (único)")
+        inputId.setInputType(InputType.TYPE_CLASS_NUMBER)
+        inputId.setText(habitacion.id.toString())
+        layout.addView(inputId)
+
         val inputNombre = EditText(this)
         inputNombre.setHint("Ej: Cocina")
         inputNombre.setInputType(InputType.TYPE_CLASS_TEXT)
