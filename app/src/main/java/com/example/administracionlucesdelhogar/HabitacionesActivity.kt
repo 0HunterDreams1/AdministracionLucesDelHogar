@@ -137,7 +137,7 @@ class HabitacionesActivity : AppCompatActivity() {
     }
     private fun cargarHabitacionesDinamico(gridLayout: GridLayout){
         val listaHabitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
-        
+
         // BUG FIX: Limpiar el GridLayout directamente en lugar del LinearLayout incorrecto
         gridLayout.removeAllViews()
 
@@ -346,6 +346,7 @@ class HabitacionesActivity : AppCompatActivity() {
         layout.orientation = LinearLayout.VERTICAL
         layout.setPadding(50, 40, 50, 10)
 
+        
         val inputNombre = EditText(this)
         inputNombre.hint = "Nombre de la habitación"
         inputNombre.inputType = InputType.TYPE_CLASS_TEXT

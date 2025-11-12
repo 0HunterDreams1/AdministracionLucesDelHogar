@@ -12,4 +12,7 @@
     <string name="esc_titulo">Escenarios</string>
     <string name="esc_msj_principal">Administre las escenarios que desea controlar</string>
     <string name="esc_msj_secundario">Agregue escenarios.</string>
+    <string name="guardar">Guardar</string>
+    <string name="id_del_escenario">ID del escenario</string>
+    <string name="nombre_del_escenario">Nombre del escenario</string>
 </resources>
