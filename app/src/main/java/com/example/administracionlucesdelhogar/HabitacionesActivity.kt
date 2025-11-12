@@ -90,6 +90,7 @@ class HabitacionesActivity : AppCompatActivity() {
 
     private fun cargarHabitacionesDinamico(gridLayout: GridLayout){
 <<<<<<< HEAD
+<<<<<<< HEAD
         val listaHabitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
 
         // BUG FIX: Limpiar el GridLayout directamente en lugar del LinearLayout incorrecto
