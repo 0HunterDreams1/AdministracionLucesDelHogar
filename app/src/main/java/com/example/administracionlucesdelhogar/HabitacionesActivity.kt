@@ -143,7 +143,7 @@ class HabitacionesActivity : AppCompatActivity() {
     private fun cargarHabitacionesDinamico(gridLayout: GridLayout){
         val listaHabitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
         val layoutHabitaciones = findViewById<LinearLayout>(R.id.layoutHabitaciones)
-        layoutHabitaciones.removeAllViews()
+        gridLayout.removeAllViews()
 
         // Verifico si tengo habitaciones cargadas
         if (listaHabitaciones.isNotEmpty()) {
