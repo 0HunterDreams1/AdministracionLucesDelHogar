@@ -6,7 +6,8 @@
         android:background="@drawable/rounded_background"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="8dp"
+
+        android:layout_marginBottom="16dp"
        >
 
         <ImageView

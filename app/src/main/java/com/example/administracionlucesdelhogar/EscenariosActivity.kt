@@ -20,6 +20,7 @@ import com.example.administracionlucesdelhogar.controladores.ControladorEscenari
 import com.example.administracionlucesdelhogar.controladores.ControladorHabitaciones
 import com.example.administracionlucesdelhogar.modelos.Escenario
 import com.example.administracionlucesdelhogar.modelos.Habitacion
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.launch
 
 @Suppress("DEPRECATION")
@@ -56,7 +57,9 @@ class EscenariosActivity : AppCompatActivity() {
 
         cargarEscenarios(layoutEscenarios)
 
-        btnAgregar.setOnClickListener { mostrarDialogoAgregarOEditarEscenario(null, layoutEscenarios) }
+        btnAgregar.setOnClickListener { agregarEditarEscenario(null, layoutEscenarios) }
+
+//        btnAgregar.setOnClickListener { mostrarDialogoAgregarOEditarEscenario(null, layoutEscenarios) }
         btnEditar.setOnClickListener { seleccionarEscenarioParaEditar(layoutEscenarios) }
         btnEliminar.setOnClickListener { eliminarEscenario(layoutEscenarios) }
     }
@@ -157,10 +160,97 @@ class EscenariosActivity : AppCompatActivity() {
 
 //            layout.addView(tv)
 //            layout.addView(switch)
+            val params = GridLayout.LayoutParams()
+            params.width = GridLayout.LayoutParams.MATCH_PARENT
+            params.height = GridLayout.LayoutParams.WRAP_CONTENT
+            params.setMargins(0, 0, 0, 16)
+            itemEscenarioView.layoutParams = params
             layoutEscenarios.addView(itemEscenarioView)
         }
     }
 
+    private fun agregarEditarEscenario(escenario: Escenario?, layoutEscenarios: LinearLayout){
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val bottomEscenarioView = layoutInflater.inflate(R.layout.bottom_sheet_escenarios, null)
+
+        val tvNombre = bottomEscenarioView.findViewById<TextView>(R.id.nombreEscenario)
+        val inputId: Int = escenario?.id ?: controladorEscenarios.obtenerSiguienteId()
+
+        tvNombre.hint = "Nombre del escenario"
+        if (escenario != null) tvNombre.setText(escenario.nombre)
+
+        // Agregar el listado de las habitaciones en el linearLayout (contenedorHabitaciones) dentro del scroll
+        val habitaciones = controladorHabitaciones.listaHabitaciones
+        if (habitaciones.isEmpty()) {
+            Toast.makeText(this, "No hay habitaciones disponibles", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val contenedorHabitacionesView = bottomEscenarioView.findViewById<LinearLayout>(R.id.contenedorHabitaciones)
+
+        val nombres = habitaciones.map { it.nombre }.toTypedArray()
+
+        //Mostrar el listado de habitaciones
+        habitaciones.forEach { habitacion  ->
+            val checkBox = CheckBox(this).apply {
+                text = habitacion.nombre
+                isChecked = escenario?.habitaciones?.any { it.id == habitacion.id } == true
+
+            }
+            contenedorHabitacionesView.addView(checkBox)
+        }
+        val botonGuardar = bottomEscenarioView.findViewById<Button>(R.id.botonGuardar)
+
+        botonGuardar.setOnClickListener {
+            val nombre = tvNombre.text.toString().trim()
+
+            if (nombre.isEmpty()) {
+                Toast.makeText(this, "Debes ingresar un nombre para el escenario", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Obtener habitaciones seleccionadas
+            val habitacionesSeleccionadas = mutableListOf<Habitacion>()
+            for (i in 0 until contenedorHabitacionesView.childCount) {
+                val view = contenedorHabitacionesView.getChildAt(i)
+                if (view is CheckBox && view.isChecked) {
+                    val nombreHabitacion = view.text.toString()
+                    val habitacion = habitaciones.find { it.nombre == nombreHabitacion }
+                    if (habitacion != null) {
+                        habitacionesSeleccionadas.add(habitacion)
+                    }
+                }
+            }
+            Log.i("habitacionesEscenarioos",  ArrayList(habitacionesSeleccionadas).toString())
+
+            if (habitacionesSeleccionadas.isEmpty()) {
+                Toast.makeText(this, "Seleccioná al menos una habitación", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (escenario != null) {
+                // EDITAR: reemplazar los datos del escenario existente
+                escenario.id = inputId
+                escenario.nombre = nombre
+                escenario.habitaciones =  ArrayList(habitacionesSeleccionadas)
+                controladorEscenarios.guardarCambios()
+                Toast.makeText(this, "Escenario $nombre modificado", Toast.LENGTH_SHORT).show()
+            } else {
+                // AGREGAR: crear nuevo escenario
+                val nuevoEscenario = Escenario(inputId, nombre,  ArrayList(habitacionesSeleccionadas), false)
+                controladorEscenarios.agregarEscenario(nuevoEscenario)
+                Toast.makeText(this, "Escenario $nombre agregado", Toast.LENGTH_SHORT).show()
+            }
+
+            bottomSheetDialog.dismiss()
+
+            // Si querés actualizar la UI principal:
+            cargarEscenarios(layoutEscenarios)
+        }
+
+        bottomSheetDialog.setContentView(bottomEscenarioView)
+        bottomSheetDialog.show()
+    }
     // FUNCION UNIFICADA: agregar o editar
     private fun mostrarDialogoAgregarOEditarEscenario(
         escenario: Escenario?,
@@ -268,7 +358,7 @@ class EscenariosActivity : AppCompatActivity() {
             .setTitle("Selecciona un escenario para editar")
             .setItems(nombres) { _, which ->
                 val escenario = lista[which]
-                mostrarDialogoAgregarOEditarEscenario(escenario, layoutEscenarios)
+                agregarEditarEscenario(escenario, layoutEscenarios)
             }
             .setNegativeButton("Cancelar", null)
             .show()

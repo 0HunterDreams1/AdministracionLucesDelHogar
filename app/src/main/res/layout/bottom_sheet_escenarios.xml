@@ -6,15 +6,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <EditText
-        android:id="@+id/editIdEscenario"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/id_del_escenario"
-        android:inputType="number" />
+<!--    <EditText-->
+<!--        android:id="@+id/editIdEscenario"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:hint="@string/id_del_escenario"-->
+<!--        android:inputType="number" />-->
 
     <EditText
-        android:id="@+id/editNombreEscenario"
+        android:id="@+id/nombreEscenario"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/nombre_del_escenario" />

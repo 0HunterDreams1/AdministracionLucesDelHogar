@@ -2,6 +2,7 @@ package com.example.administracionlucesdelhogar.controladores
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import androidx.core.content.edit
 import com.example.administracionlucesdelhogar.modelos.Escenario
 import com.example.administracionlucesdelhogar.modelos.Habitacion
