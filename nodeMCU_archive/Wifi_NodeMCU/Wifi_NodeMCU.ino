@@ -1,7 +1,7 @@
 #include <ESP8266WiFi.h>
 
-const char* ssid = "Piper-2.4G";
-const char* password = "QwerTy#123987";
+const char* ssid = "Miriam";
+const char* password = "2022mpg1997";
 
 WiFiServer server(80);
 

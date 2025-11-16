@@ -102,6 +102,10 @@ class EscenariosActivity : AppCompatActivity() {
 
             switchRoom.isChecked = escenario.estado
 
+            if (escenario.habitaciones.size == 0) {
+                switchRoom.isEnabled = false;
+            }
+
             switchRoom.setOnCheckedChangeListener { buttonView, isChecked ->
                 buttonView.isEnabled = false // Deshabilitar para evitar interacciones repetidas
 
@@ -121,7 +125,7 @@ class EscenariosActivity : AppCompatActivity() {
                                 todasHabitaciones.forEach { h -> h.estado = codesToTurnOn.contains(h.codigoHabitacion.toString()) }
                                 controladorEscenarios.guardarCambios()
                                 controladorHabitaciones.guardarCambios()
-                                Toast.makeText(this@EscenariosActivity, "Escenario '${escenario.nombre}' activado", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@EscenariosActivity, "Escenario \"${escenario.nombre}\" activado", Toast.LENGTH_SHORT).show()
                                 cargarEscenarios(layoutEscenarios) // Recargar UI
                             }
                         } else {
@@ -138,7 +142,7 @@ class EscenariosActivity : AppCompatActivity() {
                                 }
                                 controladorEscenarios.guardarCambios()
                                 controladorHabitaciones.guardarCambios()
-                                Toast.makeText(this@EscenariosActivity, "Escenario '${escenario.nombre}' desactivado", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@EscenariosActivity, "Escenario \"${escenario.nombre}\" desactivado", Toast.LENGTH_SHORT).show()
                                 cargarEscenarios(layoutEscenarios) // Recargar UI
                             }
                         }
@@ -234,12 +238,12 @@ class EscenariosActivity : AppCompatActivity() {
                 escenario.nombre = nombre
                 escenario.habitaciones =  ArrayList(habitacionesSeleccionadas)
                 controladorEscenarios.guardarCambios()
-                Toast.makeText(this, "Escenario $nombre modificado", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Escenario \"$nombre\" modificado", Toast.LENGTH_SHORT).show()
             } else {
                 // AGREGAR: crear nuevo escenario
                 val nuevoEscenario = Escenario(inputId, nombre,  ArrayList(habitacionesSeleccionadas), false)
                 controladorEscenarios.agregarEscenario(nuevoEscenario)
-                Toast.makeText(this, "Escenario $nombre agregado", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Escenario \"$nombre\" agregado", Toast.LENGTH_SHORT).show()
             }
 
             bottomSheetDialog.dismiss()

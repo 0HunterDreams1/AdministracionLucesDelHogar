@@ -1,6 +1,5 @@
 package com.example.administracionlucesdelhogar
 
-import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.DialogInterface
 import android.graphics.Color
@@ -8,10 +7,8 @@ import android.graphics.PorterDuff
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CompoundButton
@@ -34,7 +31,6 @@ import com.example.administracionlucesdelhogar.controladores.ControladorHabitaci
 import com.example.administracionlucesdelhogar.modelos.CodigoHabitacion
 import com.example.administracionlucesdelhogar.modelos.Habitacion
 import com.example.administracionlucesdelhogar.modelos.TipoHabitacion
-import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -74,7 +70,6 @@ class HabitacionesActivity : AppCompatActivity() {
         // Cargo las habitaciones guardadas
         cargarHabitacionesDinamico(gridLayout)
 
-        val layoutHabitaciones = findViewById<LinearLayout>(R.id.layoutHabitaciones)
         // Informo la cantidad de posibles habitaciones a cargar
         val txtSecundario = findViewById<TextView>(R.id.txtSecundario)
         txtSecundario.text = "* Puede agregar hasta ${CodigoHabitacion.entries.size} habitaciones."
@@ -110,7 +105,7 @@ class HabitacionesActivity : AppCompatActivity() {
                 // actualizar modelo solo si la petición fue exitosa
                 controladorHabitaciones.actualizarEstado(habitacion, isChecked)
                 val estado = if (isChecked) "encendida" else "apagada"
-                Toast.makeText(this@HabitacionesActivity, "${habitacion.nombre} está $estado", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@HabitacionesActivity, "Habitación \"${habitacion.nombre}\" $estado", Toast.LENGTH_SHORT).show()
             } catch (e: ClientRequestException) {
                 // 4xx
                 Toast.makeText(this@HabitacionesActivity, "Error en la petición: ${e.message}", Toast.LENGTH_LONG).show()
@@ -142,7 +137,6 @@ class HabitacionesActivity : AppCompatActivity() {
     }
     private fun cargarHabitacionesDinamico(gridLayout: GridLayout){
         val listaHabitaciones: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones
-        val layoutHabitaciones = findViewById<LinearLayout>(R.id.layoutHabitaciones)
         gridLayout.removeAllViews()
 
         // Verifico si tengo habitaciones cargadas
@@ -189,30 +183,27 @@ class HabitacionesActivity : AppCompatActivity() {
     }
 
     private fun mostrarDialogoAgregarHabitacion(gridLayout: GridLayout) {
-        // Verifico si quedan códigos de habitación no usados
+
         if (!controladorHabitaciones.puedoCargarHabitacion()) {
-            Toast.makeText(this, "Ya se llegó al límite de habitaciones cargadas.", Toast.LENGTH_SHORT)
-                .show()
+            Toast.makeText(this, "Ya se llegó al límite de habitaciones cargadas.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Agregar nueva habitación")
+        val bottomSheet = com.google.android.material.bottomsheet.BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_habitaciones, null)
+        bottomSheet.setContentView(view)
 
-        // Contenedor vertical para los dos EditText
-        val layout = LinearLayout(this)
-        layout.orientation = LinearLayout.VERTICAL
-        layout.setPadding(50, 40, 50, 10)
+        val lblIdHabitacion = view.findViewById<TextView>(R.id.lblIdHabitacion)
+        val spinnerTipo = view.findViewById<Spinner>(R.id.spinnerTipoHabitacion)
+        val spinnerCodigo = view.findViewById<Spinner>(R.id.spinnerCodigoHabitacion)
+        val inputNombre = view.findViewById<EditText>(R.id.inputNombre)
+        val btnAgregar = view.findViewById<Button>(R.id.btnAgregar)
 
-        // Id de habitación
-        val inputId = controladorHabitaciones.obtenerSiguienteId().toString()
-        val lblIdHabitacion = TextView(this)
-        lblIdHabitacion.text = "Id: ${inputId}"
-        lblIdHabitacion.textSize = 16f
-        lblIdHabitacion.setPadding(0, 16, 0, 8)
-        layout.addView(lblIdHabitacion)
+        // ID
+        val inputId = controladorHabitaciones.obtenerSiguienteId()
+        lblIdHabitacion.text = "Id: $inputId"
 
-        // Armo la colección de tipos de habitaciones posibles
+        // Tipos de habitación
         val tipos = listOf(
             TipoHabitacion.Cocina,
             TipoHabitacion.Habitacion,
@@ -224,106 +215,53 @@ class HabitacionesActivity : AppCompatActivity() {
         )
         val nombresTipos = tipos.map { it.nombre }
 
-        // Tipo de habitación
-        val lblTipoHabitacion = TextView(this)
-        lblTipoHabitacion.text = "Tipo de habitación:"
-        lblTipoHabitacion.textSize = 16f
-        lblTipoHabitacion.setPadding(0, 16, 0, 8)
-        layout.addView(lblTipoHabitacion)
-        val spinner = Spinner(this)
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombresTipos)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
-        layout.addView(spinner)
+        val adapterTipos = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombresTipos)
+        adapterTipos.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerTipo.adapter = adapterTipos
 
-        // Nombre de habitación
-        val lblNombre = TextView(this)
-        lblNombre.text = "Nombre:"
-        lblNombre.textSize = 16f
-        lblNombre.setPadding(0, 16, 0, 8)
-        layout.addView(lblNombre)
-        val inputNombre = EditText(this)
-        inputNombre.setHint("Ej: Cocina")
-        inputNombre.setInputType(InputType.TYPE_CLASS_TEXT)
-        layout.addView(inputNombre)
-
-        // Código de habitación
-        val lblCodigoHabitacion = TextView(this)
-        lblCodigoHabitacion.text = "Código de habitación:"
-        lblCodigoHabitacion.textSize = 16f
-        lblCodigoHabitacion.setPadding(0, 16, 0, 8)
-        layout.addView(lblCodigoHabitacion)
-        // Obtengo los distintos códigos de habitación disponibles
-        val codigosHabitacion = CodigoHabitacion.entries
-        val codigosSpinnerH = mutableListOf<CodigoHabitacion>()
-        for (auxCodigoHabitacion in codigosHabitacion) {
-            var codigoEnUso = false
-            for (h in controladorHabitaciones.listaHabitaciones) {
-                if (auxCodigoHabitacion.codigo == h.codigoHabitacion) {
-                    codigoEnUso = true
-                }
-            }
-            if (!codigoEnUso) {
-                codigosSpinnerH.add(auxCodigoHabitacion)
-            }
+        // Códigos disponibles
+        val codigosDisponibles = CodigoHabitacion.entries.filter { codigo ->
+            controladorHabitaciones.listaHabitaciones.none { it.codigoHabitacion == codigo.codigo }
         }
-        val spinnerH = Spinner(this)
-        val adapterH = ArrayAdapter(this, android.R.layout.simple_spinner_item, codigosSpinnerH)
-        adapterH.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerH.adapter = adapterH
-        layout.addView(spinnerH)
 
-        builder.setView(layout)
+        val adapterCodigos = ArrayAdapter(this, android.R.layout.simple_spinner_item, codigosDisponibles)
+        adapterCodigos.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerCodigo.adapter = adapterCodigos
 
-        // Defino el botón de confirmación de agregado de habitación
-        builder.setPositiveButton(
-            "Agregar",
-            DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
-                val id = inputId.toInt()
-                val nombre = inputNombre.getText().toString().trim { it <= ' ' }
+        btnAgregar.setOnClickListener {
+            val nombre = inputNombre.text.toString().trim()
 
-                // Verifico si el usuario escribió un nombre de habitación
-                if (nombre.isEmpty()) {
-                    Toast.makeText(
-                        this,
-                        "Debe ingresar un nombre para la habitación",
-                        Toast.LENGTH_SHORT
-                    )
-                        .show()
-                    return@OnClickListener
-                }
+            if (nombre.isEmpty()) {
+                Toast.makeText(this, "Debe ingresar un nombre", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-                // Obtengo el código de habitación seleccionado
-                val codigoSeleccionado =  spinnerH.getItemAtPosition(spinnerH.selectedItemPosition) as CodigoHabitacion
+            // Validar duplicado
+            if (controladorHabitaciones.listaHabitaciones.any { it.nombre.equals(nombre, ignoreCase = true) }) {
+                Toast.makeText(this, "Ya existe una habitación con ese nombre", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-                // Verificar duplicados
-                for (h in controladorHabitaciones.listaHabitaciones) {
-                    if (h.nombre.equals(nombre, ignoreCase = true)) {
-                        Toast.makeText(
-                            this,
-                            "Ya existe una habitación con ese nombre",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@OnClickListener
-                    }
-                }
+            val codigoSeleccionado = spinnerCodigo.selectedItem as CodigoHabitacion
+            val tipoSeleccionado = tipos[spinnerTipo.selectedItemPosition]
 
-                // Creo la nueva habitación y la guardo
-                val auxNuevaHabitacion = Habitacion(id, nombre, false, tipos[spinner.selectedItemPosition].iconoResId, codigoSeleccionado.codigo)
-                controladorHabitaciones.agregarHabitacion(auxNuevaHabitacion)
-                controladorHabitaciones.guardarCambios()
-                // Recargo las habitaciones
-                cargarHabitacionesDinamico(gridLayout)
-                Toast.makeText(this, "Habitación \"$nombre\" agregada", Toast.LENGTH_SHORT)
-                    .show()
-            })
-        // Defino el botón de cancelación
-        builder.setNegativeButton(
-            "Cancelar"
-        ) {
-            dialog: DialogInterface?, which: Int -> dialog!!.cancel()
+            val nuevaHabitacion = Habitacion(
+                inputId,
+                nombre,
+                false,
+                tipoSeleccionado.iconoResId,
+                codigoSeleccionado.codigo
+            )
+
+            controladorHabitaciones.agregarHabitacion(nuevaHabitacion)
+            controladorHabitaciones.guardarCambios()
+            cargarHabitacionesDinamico(gridLayout)
+            Toast.makeText(this, "Habitación \"$nombre\" agregada", Toast.LENGTH_SHORT).show()
+
+            bottomSheet.dismiss()
         }
-        builder.show()
+
+        bottomSheet.show()
     }
 
     private fun editarHabitacion(gridLayout: GridLayout) {
@@ -353,15 +291,25 @@ class HabitacionesActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun mostrarDialogoEditarHabitacion(habitacion: Habitacion,gridLayout: GridLayout) {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Editar habitación")
+    private fun mostrarDialogoEditarHabitacion(habitacion: Habitacion, gridLayout: GridLayout) {
 
-        val layout = LinearLayout(this)
-        layout.orientation = LinearLayout.VERTICAL
-        layout.setPadding(50, 40, 50, 10)
+        val bottomSheet = com.google.android.material.bottomsheet.BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_habitaciones, null)
+        bottomSheet.setContentView(view)
 
-        // Armo la colección de tipos de habitaciones posibles
+        val lblIdHabitacion = view.findViewById<TextView>(R.id.lblIdHabitacion)
+        val spinnerTipo = view.findViewById<Spinner>(R.id.spinnerTipoHabitacion)
+        val spinnerCodigo = view.findViewById<Spinner>(R.id.spinnerCodigoHabitacion)
+        val inputNombre = view.findViewById<EditText>(R.id.inputNombre)
+        val btnAgregar = view.findViewById<Button>(R.id.btnAgregar)
+
+        // Cambiar texto del botón
+        btnAgregar.text = "Guardar cambios"
+
+        // Mostrar ID existente
+        lblIdHabitacion.text = "Id: ${habitacion.id}"
+
+        // Tipos de habitación
         val tipos = listOf(
             TipoHabitacion.Cocina,
             TipoHabitacion.Habitacion,
@@ -371,117 +319,68 @@ class HabitacionesActivity : AppCompatActivity() {
             TipoHabitacion.Living,
             TipoHabitacion.Garage
         )
-        val nombresTipos = tipos.map {it.nombre }
+        val nombresTipos = tipos.map { it.nombre }
 
-        // Tipo de habitación
-        val label = TextView(this)
-        label.text = "Tipo de habitación"
-        label.textSize = 16f
-        label.setPadding(0, 16, 0, 8)
-        layout.addView(label)
-        val spinner = Spinner(this)
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombresTipos)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
-        layout.addView(spinner)
-        val iconBuscado = habitacion.tipoHabitacion // o el que corresponda
-        val tipoEncontrado = tipos.find { it.iconoResId == iconBuscado }
-        if (tipoEncontrado != null) {
-            val posicion = tipos.indexOfFirst { it.iconoResId  == tipoEncontrado.iconoResId }
-            Log.i("posicion",posicion.toString())
-            if (posicion >= 0) {
-                spinner.setSelection(posicion)
-            }
-        }
+        val adapterTipos = ArrayAdapter(this, android.R.layout.simple_spinner_item, nombresTipos)
+        adapterTipos.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerTipo.adapter = adapterTipos
 
-        // Nombre de habitación
-        val lblNombre = TextView(this)
-        lblNombre.text = "Nombre:"
-        lblNombre.textSize = 16f
-        lblNombre.setPadding(0, 16, 0, 8)
-        layout.addView(lblNombre)
-        val inputNombre = EditText(this)
-        inputNombre.setHint("Ej: Cocina")
-        inputNombre.setInputType(InputType.TYPE_CLASS_TEXT)
+        // Seleccionar el tipo actual
+        val tipoEncontrado = tipos.indexOfFirst { it.iconoResId == habitacion.tipoHabitacion }
+        if (tipoEncontrado != -1) spinnerTipo.setSelection(tipoEncontrado)
+
+        // Nombre actual
         inputNombre.setText(habitacion.nombre)
-        layout.addView(inputNombre)
 
-        // Código de habitación
-        val lblCodigoHabitacion = TextView(this)
-        lblCodigoHabitacion.text = "Código de habitación:"
-        lblCodigoHabitacion.textSize = 16f
-        lblCodigoHabitacion.setPadding(0, 16, 0, 8)
-        layout.addView(lblCodigoHabitacion)
-        // Obtengo los códigos de habitación disponibles
-        val codigosHabitacion = CodigoHabitacion.entries
-        val codigosSpinnerH = mutableListOf<CodigoHabitacion>()
-        for (auxCodigoHabitacion in codigosHabitacion) {
-            var codigoEnUso = false
-            for (h in controladorHabitaciones.listaHabitaciones) {
-                if (auxCodigoHabitacion.codigo == h.codigoHabitacion && h.id != habitacion.id)  {
-                    codigoEnUso = true
-                }
-            }
-            if (!codigoEnUso) {
-                codigosSpinnerH.add(auxCodigoHabitacion)
+        // Códigos disponibles (evita el duplicado excepto el suyo propio)
+        val codigosDisponibles = CodigoHabitacion.entries.filter { codigo ->
+            controladorHabitaciones.listaHabitaciones.none {
+                it.codigoHabitacion == codigo.codigo && it.id != habitacion.id
             }
         }
-        val spinnerH = Spinner(this)
-        val adapterH = ArrayAdapter(this, android.R.layout.simple_spinner_item, codigosSpinnerH)
-        adapterH.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerH.adapter = adapterH
-        layout.addView(spinnerH)
-        val indice = codigosSpinnerH.indexOfFirst { it.codigo == habitacion.codigoHabitacion }
-        if (indice != -1) {
-            spinnerH.setSelection(indice)
+
+        val adapterCodigos = ArrayAdapter(this, android.R.layout.simple_spinner_item, codigosDisponibles)
+        adapterCodigos.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerCodigo.adapter = adapterCodigos
+
+        // Seleccionar código actual
+        val idxCodigo = codigosDisponibles.indexOfFirst { it.codigo == habitacion.codigoHabitacion }
+        if (idxCodigo != -1) spinnerCodigo.setSelection(idxCodigo)
+
+        // Guardar cambios
+        btnAgregar.setOnClickListener {
+
+            val nombre = inputNombre.text.toString().trim()
+
+            if (nombre.isEmpty()) {
+                Toast.makeText(this, "Debe ingresar un nombre", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Validar duplicado excepto él mismo
+            if (controladorHabitaciones.listaHabitaciones.any {
+                    it.nombre.equals(nombre, ignoreCase = true) && it.id != habitacion.id
+                }) {
+                Toast.makeText(this, "Ya existe una habitación con ese nombre", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Actualizar datos
+            habitacion.nombre = nombre
+            habitacion.tipoHabitacion = tipos[spinnerTipo.selectedItemPosition].iconoResId
+            val codigoSeleccionado = spinnerCodigo.selectedItem as CodigoHabitacion
+            habitacion.codigoHabitacion = codigoSeleccionado.codigo
+
+            controladorHabitaciones.guardarCambios()
+            cargarHabitacionesDinamico(gridLayout)
+
+            Toast.makeText(this, "Habitación \"${habitacion.nombre}\" actualizada", Toast.LENGTH_SHORT).show()
+            bottomSheet.dismiss()
         }
 
-        builder.setView(layout)
-
-        // Defino el botón de confirmación de agregado de habitación
-        builder.setPositiveButton(
-            "Guardar cambios",
-            DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
-                val nombre = inputNombre.getText().toString().trim { it <= ' ' }
-
-                // Verifico si el nombre quedó vacío
-                if (nombre.isEmpty()) {
-                    Toast.makeText(this, "Debes ingresar un ID y un nombre", Toast.LENGTH_SHORT)
-                        .show()
-                    return@OnClickListener
-                }
-
-                // Verificar duplicados (exceptuando la habitación actual)
-                for (h in controladorHabitaciones.listaHabitaciones) {
-                    if (h !== habitacion) {
-                        if (h.nombre.equals(nombre, ignoreCase = true)) {
-                            Toast.makeText(
-                                this,
-                                "Ya existe una habitación con ese nombre",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@OnClickListener
-                        }
-                    }
-                }
-
-                // Actualizar datos
-                habitacion.nombre = nombre
-                habitacion.tipoHabitacion = tipos[spinner.selectedItemPosition].iconoResId
-                val codigoSeleccionado =  spinnerH.getItemAtPosition(spinnerH.selectedItemPosition) as CodigoHabitacion
-                habitacion.codigoHabitacion = codigoSeleccionado.codigo
-                controladorHabitaciones.guardarCambios()
-                cargarHabitacionesDinamico(gridLayout)
-                Toast.makeText(this, "Habitación \"${habitacion.nombre}\" actualizada", Toast.LENGTH_SHORT).show()
-            })
-        // Defino el botón de cancelación
-        builder.setNegativeButton(
-            "Cancelar"
-        ) {
-            dialog: DialogInterface?, which: Int -> dialog!!.cancel()
-        }
-        builder.show()
+        bottomSheet.show()
     }
+
 
     private fun eliminarHabitacion(gridLayout: GridLayout) {
         val lista: ArrayList<Habitacion> = controladorHabitaciones.listaHabitaciones

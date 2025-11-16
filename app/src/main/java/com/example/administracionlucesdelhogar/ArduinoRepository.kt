@@ -16,7 +16,8 @@ import java.net.URL
 
 class ArduinoRepository {
 
-    private val nodeMcuIp = "192.168.100.21"
+    private val nodeMcuIp = "10.140.56.99"
+    //private val nodeMcuIp = "192.168.18.161/escapesnico/public"
 
     private val client = HttpClient(OkHttp) {
         install(HttpTimeout) {
